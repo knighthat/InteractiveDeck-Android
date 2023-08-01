@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:tools="http://schemas.android.com/tools"
+        xmlns:app="http://schemas.android.com/apk/res-auto"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        tools:context=".activity.DefaultActivity"
+        android:layout_margin="30dp">
+
+    <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/ipInput"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            app:layout_constraintWidth_percent=".75"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            android:hint="@string/desktop_ip_address"
+            android:inputType="phone"/>
+
+    <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/portInput"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            app:layout_constraintWidth_percent=".25"
+            app:layout_constraintLeft_toRightOf="@id/ipInput"
+            app:layout_constraintTop_toTopOf="parent"
+            android:hint="@string/desktop_port"
+            android:inputType="number"
+            android:maxLength="5"/>
+
+    <Button
+            android:id="@+id/connectBtn"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            app:layout_constraintWidth_percent="1"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/ipInput"
+            android:text="@string/connect_btn_str"
+            android:background="@color/connect_btn_color"/>
+
+</androidx.constraintlayout.widget.ConstraintLayout>
