@@ -1,18 +1,21 @@
 package me.knighthat.interactivedeck.json;
 
-import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonParseException;
+import com.google.gson.JsonParser;
 
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.Map;
-
-import me.knighthat.interactivedeck.component.Buttons;
+import org.jetbrains.annotations.Nullable;
 
 public class Json {
 
-    public static void handle( @NotNull JsonObject json ) {
-        for (Map.Entry<String, JsonElement> entry : json.entrySet())
-            Buttons.add(entry.getKey(), entry.getValue());
+    @Contract ( "_ -> null" )
+    public static @Nullable JsonObject validate( @NotNull String str ) {
+        try {
+            return JsonParser.parseString(str).getAsJsonObject();
+        } catch (JsonParseException e) {
+            return null;
+        }
     }
 }
