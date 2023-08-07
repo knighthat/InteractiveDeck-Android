@@ -2,6 +2,8 @@ package me.knighthat.interactivedeck.activity
 
 import android.content.Intent
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.widget.Button
 import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
@@ -9,11 +11,15 @@ import androidx.appcompat.app.AppCompatActivity
 import com.google.android.material.textfield.TextInputEditText
 import me.knighthat.interactivedeck.R
 import me.knighthat.interactivedeck.connection.wireless.WirelessController
+import me.knighthat.interactivedeck.console.Log
 import kotlin.system.exitProcess
 
 class DefaultActivity : AppCompatActivity() {
 
     companion object {
+        @JvmField
+        val HANDLER = Handler(Looper.getMainLooper())
+
         lateinit var INSTANCE: DefaultActivity
         lateinit var BTN_LAYOUT: Intent
 
@@ -36,7 +42,7 @@ class DefaultActivity : AppCompatActivity() {
     fun startBtnLayout() {
         startActivity(BTN_LAYOUT)
     }
-
+    
     override fun onCreate(savedInstanceState: Bundle?) {
         INSTANCE = this
         BTN_LAYOUT = Intent(this, ButtonsLayout::class.java)
@@ -49,7 +55,20 @@ class DefaultActivity : AppCompatActivity() {
 
         val connectBtn = findViewById<Button>(R.id.connectBtn)
         connectBtn.setOnClickListener {
-            WirelessController.connect(ipInput, portInput)
+            if (ipInput.text == null || portInput.text == null) return@setOnClickListener
+
+            try {
+                val ip = ipInput.text.toString()
+                val port = portInput.text.toString().toInt()
+
+                Log.deb("Sending pairing request to $ip:$port")
+
+                WirelessController(ip, port).start()
+            } catch (e: NumberFormatException) {
+                val warn = "Port must be a number between 1 and 65535"
+                toast(warn)
+                Log.warn(warn)
+            }
         }
     }
 }
