@@ -13,7 +13,6 @@ class IButton(context: Context, id: String) : AppCompatButton(context) {
     private val icon = BIcon()
     private val label = BLabel()
 
-
     init {
         uuid = UUID.fromString(id)
 
@@ -22,6 +21,14 @@ class IButton(context: Context, id: String) : AppCompatButton(context) {
         params.columnSpec = GridLayout.spec(GridLayout.UNDEFINED, 1, 1f)
 
         this.layoutParams = params
+    }
+
+    constructor(context: Context, btnJson: JsonObject) : this(context, btnJson["uuid"].asString) {
+        update(btnJson)
+    }
+
+    fun uuid(): UUID {
+        return this.uuid
     }
 
     fun update(json: JsonObject) {
@@ -33,7 +40,8 @@ class IButton(context: Context, id: String) : AppCompatButton(context) {
         if (labelElement != null)
             label.update(labelElement.asJsonObject)
 
-        setBackgroundColor(icon.outer)
+        setBackgroundColor(icon.inner)
+        setTextColor(label.color)
         text = label.text
     }
 
