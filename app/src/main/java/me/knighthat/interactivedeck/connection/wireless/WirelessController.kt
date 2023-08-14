@@ -7,6 +7,7 @@ import me.knighthat.interactivedeck.connection.request.Request
 import me.knighthat.interactivedeck.connection.request.RequestHandler
 import me.knighthat.interactivedeck.console.Log
 import me.knighthat.interactivedeck.json.Json
+import me.knighthat.interactivedeck.vars.Settings
 import me.knighthat.interactivedeck.vars.Settings.BUFFER
 import java.io.IOException
 import java.io.InputStream
@@ -40,6 +41,7 @@ class WirelessController(ip: String, port: Int) : Thread() {
                     name = "NET/I"
                     this.handIncomingTraffic(it.getInputStream())
                     name = "NET"
+
                 }
             SOCKET = null
         } catch (e: IOException) {
@@ -50,6 +52,8 @@ class WirelessController(ip: String, port: Int) : Thread() {
             Log.deb("Connection timeout! Resetting...")
             DefaultActivity.toast("Connection timeout!")
             interrupt()
+        } finally {
+            Settings.saveLastHost(ip, port)
         }
     }
 

@@ -1,5 +1,6 @@
 package me.knighthat.interactivedeck.activity
 
+import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.os.Handler
@@ -12,6 +13,7 @@ import com.google.android.material.textfield.TextInputEditText
 import me.knighthat.interactivedeck.R
 import me.knighthat.interactivedeck.connection.wireless.WirelessController
 import me.knighthat.interactivedeck.console.Log
+import me.knighthat.interactivedeck.vars.Settings
 import kotlin.system.exitProcess
 
 class DefaultActivity : AppCompatActivity() {
@@ -42,16 +44,20 @@ class DefaultActivity : AppCompatActivity() {
     fun startBtnLayout() {
         startActivity(BTN_LAYOUT)
     }
-    
+
     override fun onCreate(savedInstanceState: Bundle?) {
         INSTANCE = this
         BTN_LAYOUT = Intent(this, ButtonsLayout::class.java)
+
+        Settings.PREFERENCES = getSharedPreferences("AppSettings", Context.MODE_PRIVATE)
 
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_default)
 
         val ipInput = findViewById<TextInputEditText>(R.id.ipInput)
         val portInput = findViewById<TextInputEditText>(R.id.portInput)
+
+        loadLastSettings(ipInput, portInput)
 
         val connectBtn = findViewById<Button>(R.id.connectBtn)
         connectBtn.setOnClickListener {
@@ -70,5 +76,14 @@ class DefaultActivity : AppCompatActivity() {
                 Log.warn(warn)
             }
         }
+    }
+
+    private fun loadLastSettings(ipInput: TextInputEditText, portInput: TextInputEditText) {
+        val address = Settings.address()
+        ipInput.setText(address)
+        Log.deb(address)
+
+        val port = Settings.port()
+        portInput.setText(port)
     }
 }
