@@ -14,9 +14,13 @@ class WirelessSender : Thread() {
         private lateinit var stream: OutputStream
 
         @JvmStatic
-        @Throws(InterruptedException::class)
         fun send(request: Request) {
-            QUEUE.put(request)
+            try {
+                QUEUE.put(request)
+            } catch (e: InterruptedException) {
+                Log.warn("Failed to send request!")
+                e.printStackTrace()
+            }
         }
 
         fun start(stream: OutputStream) {
@@ -32,10 +36,9 @@ class WirelessSender : Thread() {
     }
 
     override fun run() {
-        var request: Request
         while (!interrupted()) {
             try {
-                request = QUEUE.take()
+                val request = QUEUE.take()
                 val serialized = request.serialize()
 
                 Log.deb("Sending:")
