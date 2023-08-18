@@ -17,11 +17,11 @@ open class Request(val type: RequestType, val content: JsonElement) : JsonSerial
         }
     }
 
-    override fun serialize(): String {
+    override fun serialize(): JsonObject {
         val json = JsonObject()
         json.add("type", this.type.json())
         json.add("content", this.content)
 
-        return json.toString()
+        return json
     }
 }
