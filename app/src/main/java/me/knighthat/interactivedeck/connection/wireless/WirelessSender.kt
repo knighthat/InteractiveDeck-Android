@@ -42,9 +42,9 @@ class WirelessSender : Thread() {
                 val serialized = request.serialize()
 
                 Log.deb("Sending:")
-                Log.deb(serialized)
+                Log.deb(serialized.toString())
 
-                stream.write(serialized.toByteArray())
+                stream.write(serialized.toString().toByteArray())
                 stream.flush()
             } catch (e: InterruptedException) {
                 //TODO Needs proper error handling

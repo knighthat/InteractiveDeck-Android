@@ -15,7 +15,7 @@ open class Action(type: ActionType, button: IButton) {
     }
 
     fun json(): JsonObject {
-        val uuid = this.button.uuid().toString()
+        val uuid = this.button.uuid.toString()
 
         val json = JsonObject()
         json.add("action", this.type.json())
