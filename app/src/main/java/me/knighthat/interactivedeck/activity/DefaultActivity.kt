@@ -31,6 +31,9 @@ class DefaultActivity : AppCompatActivity() {
         }
     }
 
+    private lateinit var ipInput: TextInputEditText
+    private lateinit var portInput: TextInputEditText
+
     init {
         // Close program once user close app
         onBackPressedDispatcher.addCallback(object : OnBackPressedCallback(true) {
@@ -54,10 +57,10 @@ class DefaultActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_default)
 
-        val ipInput = findViewById<TextInputEditText>(R.id.ipInput)
-        val portInput = findViewById<TextInputEditText>(R.id.portInput)
+        ipInput = findViewById(R.id.ipInput)
+        portInput = findViewById(R.id.portInput)
 
-        loadLastSettings(ipInput, portInput)
+        loadLastSettings()
 
         val connectBtn = findViewById<Button>(R.id.connectBtn)
         connectBtn.setOnClickListener {
@@ -78,7 +81,7 @@ class DefaultActivity : AppCompatActivity() {
         }
     }
 
-    private fun loadLastSettings(ipInput: TextInputEditText, portInput: TextInputEditText) {
+    private fun loadLastSettings() {
         val address = Settings.address()
         ipInput.setText(address)
         Log.deb(address)
