@@ -12,6 +12,9 @@ import me.knighthat.interactivedeck.component.action.PressAction
 import me.knighthat.interactivedeck.connection.request.ActionRequest
 import me.knighthat.interactivedeck.connection.wireless.WirelessController
 import me.knighthat.interactivedeck.connection.wireless.WirelessSender
+import me.knighthat.interactivedeck.profile.Profiles
+import me.knighthat.interactivedeck.task.GotoPage
+import me.knighthat.interactivedeck.task.Task
 
 class ButtonsLayout : AppCompatActivity() {
 
@@ -31,16 +34,28 @@ class ButtonsLayout : AppCompatActivity() {
 
         _buttons = ViewModelProvider(this)[Buttons::class.java]
         _buttons.buttons.observe(this) {
+            layout.removeAllViews()
             it.forEach { btn ->
                 btn.setOnClickListener {
-                    val action = PressAction(btn)
-                    val request = ActionRequest(action)
 
-                    WirelessSender.send(request)
+                    if (btn.task == null) {
+                        val action = PressAction(btn)
+                        val request = ActionRequest(action)
+
+                        WirelessSender.send(request)
+                    } else
+                        this.switchProfile(btn.task!!)
                 }
                 layout.addView(btn)
             }
         }
+    }
+
+    private fun switchProfile(task: Task) {
+        if (task !is GotoPage) return
+
+        val profile = Profiles.get(task.uuid) ?: return
+        buttons.set(profile.buttons())
     }
 
     override fun onBackPressed() {

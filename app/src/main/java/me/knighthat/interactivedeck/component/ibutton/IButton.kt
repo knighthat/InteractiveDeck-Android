@@ -5,6 +5,8 @@ import androidx.appcompat.widget.AppCompatButton
 import com.google.gson.JsonObject
 import com.google.gson.JsonSyntaxException
 import me.knighthat.interactivedeck.activity.DefaultActivity
+import me.knighthat.interactivedeck.task.GotoPage
+import me.knighthat.interactivedeck.task.Task
 import me.knighthat.interactivedeck.utils.ColorUtils
 import java.util.UUID
 
@@ -14,6 +16,7 @@ class IButton(json: JsonObject) : AppCompatButton(DefaultActivity.INSTANCE) {
     val uuid: UUID
     val x: Int
     val y: Int
+    var task: Task? = null
 
     init {
         if (!json.has("uuid") ||
@@ -50,5 +53,11 @@ class IButton(json: JsonObject) : AppCompatButton(DefaultActivity.INSTANCE) {
         setTextColor(ColorUtils.parseJson(foreground))
 
         text = json["text"].asString
+
+        if (json.has("goto")) {
+            val uuidStr = json["goto"].asString
+            val gotoUuid = UUID.fromString(uuidStr)
+            this.task = GotoPage(gotoUuid)
+        }
     }
 }
