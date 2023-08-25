@@ -5,16 +5,14 @@ plugins {
 
 android {
     namespace 'me.knighthat.interactivedeck'
-    compileSdk 31
+    compileSdk 33
 
     defaultConfig {
         applicationId "me.knighthat.interactivedeck"
         minSdk 25
-        targetSdk 31
+        targetSdk 33
         versionCode 1
         versionName "0.0.1"
-
-        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
 
     buildTypes {
