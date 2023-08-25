@@ -31,20 +31,32 @@ class Profile(
                 throw ProfileFormatException("Missing information")
 
             val idStr = json["uuid"].asString
-            val uuid = UUID.fromString(idStr)
-            val displayName = json["displayName"].asString
-            val isDefault = json["default"].asBoolean
-            val rows = json["rows"].asInt
-            val columns = json["columns"].asInt
-            val gap = json["gap"].asInt
-            val buttons = ArrayList<IButton>()
-            val btnJson = json.getAsJsonArray("buttons")
-            btnJson.forEach {
-                val btn = IButton(it.asJsonObject)
-                buttons.add(btn)
-            }
+            val profile = Profile(
+                UUID.fromString(idStr),
+                "",
+                false,
+                1,
+                1,
+                0,
+                ArrayList()
+            )
+            profile.update(json)
 
-            return Profile(uuid, displayName, isDefault, columns, rows, gap, buttons)
+            return profile
+        }
+    }
+
+    fun update(json: JsonObject) {
+        this.displayName = json["displayName"].asString
+        this.isDefault = json["default"].asBoolean
+        this.columns = json["columns"].asInt
+        this.rows = json["rows"].asInt
+        this.gap = json["gap"].asInt
+
+        this.buttons.clear()
+        json.getAsJsonArray("buttons").forEach {
+            val btn = IButton(it.asJsonObject)
+            this.buttons.add(btn)
         }
     }
 
