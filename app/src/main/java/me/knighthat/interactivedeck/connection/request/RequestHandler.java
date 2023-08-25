@@ -12,6 +12,7 @@ import java.util.UUID;
 
 import me.knighthat.interactivedeck.activity.ButtonsLayout;
 import me.knighthat.interactivedeck.activity.DefaultActivity;
+import me.knighthat.interactivedeck.component.ibutton.IButton;
 import me.knighthat.interactivedeck.connection.wireless.WirelessSender;
 import me.knighthat.interactivedeck.console.Log;
 import me.knighthat.interactivedeck.file.Profile;
@@ -55,23 +56,30 @@ public class RequestHandler {
 
     static void handleUpdate( @NotNull JsonElement content ) {
         JsonObject json = content.getAsJsonObject();
+        JsonObject payload = json.getAsJsonObject( "payload" );
+        String uuidStr = payload.get( "uuid" ).getAsString();
+        UUID targetUuid = UUID.fromString( uuidStr );
 
-        String pIdStr = json.get( "profile" ).getAsString();
-        UUID pId = UUID.fromString( pIdStr );
-
-        String btnIdStr = json.get( "button_id" ).getAsString();
-        UUID btnId = UUID.fromString( btnIdStr );
-
-        Profile profile = Profiles.get( pId );
-        JsonObject button = json.get( "button" ).getAsJsonObject();
-        if ( profile != null )
-            DefaultActivity.HANDLER.post( () -> profile.buttons().forEach( btn -> {
-                if ( btn.getUuid().equals( btnId ) )
-                    btn.update( button );
-
-                Log.deb( "Button updated" );
-            } ) );
-        Log.deb( "Handle completed!" );
+        switch ( json.get( "target" ).getAsString() ) {
+            case "PROFILE":
+                Profile profile = Profiles.get( targetUuid );
+                if ( profile != null )
+                    profile.update( payload );
+                break;
+            case "BUTTON":
+                Profiles.PROFILES.forEach( p -> {
+                    for ( IButton button : p.buttons() )
+                        if ( button.getUuid().equals( targetUuid ) ) {
+                            DefaultActivity.HANDLER.post( () -> {
+                                button.update( payload );
+                            } );
+                            break;
+                        }
+                } );
+                break;
+            default:
+                Log.deb( "Unknown target" + json.get( "target" ) );
+        }
     }
 
     static void handlePairing( @NotNull JsonElement content ) {
