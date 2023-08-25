@@ -9,6 +9,9 @@
 .cxx
 local.properties
 
-
 # App
 /app/build/
+
+# Tests
+app/src/test
+app/src/androidTest
