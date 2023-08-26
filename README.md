@@ -4,10 +4,33 @@ Turn your Android phone into a "**_Macro Keypad_**"
 
 # Features
 
+# General
+
 🎯 Easy to use, straight forward.<br>
 🔲 Customizable, button's foreground/background/text can be changed.<br>
 🚀 Fast to connect, responsive to touch/update between devices.<br>
 ⚖️ Lightweight, built using minimal resources to maximize performance.
+
+# Core Functions
+
+📑 Multiple Pages (Profiles)
+
+- Add
+- Remove
+- Modify
+    - Title
+    - Columns (up to 6)
+    - Rows (up to 4)
+    - Gap Between Buttons
+
+🖲️ Buttons
+
+- Label
+- Background
+- Foreground (Font Color)
+- Task (Its Usage)
+    - Executing BASH Script
+    - Switch Profile on Mobile Device
 
 # Installation
 
