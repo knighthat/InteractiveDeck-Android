@@ -1,5 +1,7 @@
 package me.knighthat.interactivedeck.connection.request;
 
+import android.content.Intent;
+
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -11,12 +13,12 @@ import java.util.List;
 import java.util.UUID;
 
 import me.knighthat.interactivedeck.activity.ButtonsLayout;
-import me.knighthat.interactivedeck.activity.DefaultActivity;
 import me.knighthat.interactivedeck.component.ibutton.IButton;
 import me.knighthat.interactivedeck.connection.wireless.WirelessSender;
 import me.knighthat.interactivedeck.console.Log;
+import me.knighthat.interactivedeck.event.EventHandler;
 import me.knighthat.interactivedeck.file.Profile;
-import me.knighthat.interactivedeck.profile.Profiles;
+import me.knighthat.interactivedeck.vars.Memory;
 
 public class RequestHandler {
 
@@ -24,18 +26,10 @@ public class RequestHandler {
         JsonElement content = request.getContent();
 
         switch ( request.getType() ) {
-            case ADD:
-                handleAdd( content );
-                break;
-            case REMOVE:
-                handleRemove( content );
-                break;
-            case UPDATE:
-                handleUpdate( content );
-                break;
-            case PAIR:
-                handlePairing( content );
-                break;
+            case ADD -> handleAdd( content );
+            case REMOVE -> handleRemove( content );
+            case UPDATE -> handleUpdate( content );
+            case PAIR -> handlePairing( content );
         }
     }
 
@@ -44,9 +38,9 @@ public class RequestHandler {
         array.forEach( pJson -> {
             JsonObject json = pJson.getAsJsonObject();
             Profile profile = Profile.Companion.fromJson( json );
-            Profiles.PROFILES.add( profile );
+            Memory.Companion.add( profile );
             if ( profile.isDefault() )
-                DefaultActivity.HANDLER.post( () -> ButtonsLayout.Companion.getButtons().set( profile.buttons() ) );
+                Memory.Companion.setActive( profile );
         } );
     }
 
@@ -61,24 +55,17 @@ public class RequestHandler {
         UUID targetUuid = UUID.fromString( uuidStr );
 
         switch ( json.get( "target" ).getAsString() ) {
-            case "PROFILE":
-                Profile profile = Profiles.get( targetUuid );
+            case "PROFILE" -> {
+                Profile profile = Memory.Companion.getProfile( targetUuid );
                 if ( profile != null )
                     profile.update( payload );
-                break;
-            case "BUTTON":
-                Profiles.PROFILES.forEach( p -> {
-                    for ( IButton button : p.buttons() )
-                        if ( button.getUuid().equals( targetUuid ) ) {
-                            DefaultActivity.HANDLER.post( () -> {
-                                button.update( payload );
-                            } );
-                            break;
-                        }
-                } );
-                break;
-            default:
-                Log.deb( "Unknown target" + json.get( "target" ) );
+            }
+            case "BUTTON" -> {
+                IButton button = Memory.Companion.getButton( targetUuid );
+                if ( button != null )
+                    EventHandler.post( () -> button.update( payload ) );
+            }
+            default -> Log.deb( "Unknown target" + json.get( "target" ) );
         }
     }
 
@@ -91,6 +78,9 @@ public class RequestHandler {
         Request request = new AddRequest( ids );
         WirelessSender.send( request );
 
-        DefaultActivity.INSTANCE.startBtnLayout();
+        EventHandler.post( () -> {
+            Intent intent = new Intent( EventHandler.DEF_ACTIVITY, ButtonsLayout.class );
+            EventHandler.DEF_ACTIVITY.startActivity( intent );
+        } );
     }
 }
