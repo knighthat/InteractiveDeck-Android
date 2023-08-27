@@ -1,23 +1,29 @@
+/*
+ * Copyright (c) 2023. Knight Hat
+ * All rights reserved.
+ * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use,copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ */
+
 package me.knighthat.interactivedeck.file
 
 import com.google.gson.JsonObject
 import me.knighthat.interactivedeck.component.ibutton.IButton
 import me.knighthat.interactivedeck.exception.ProfileFormatException
-import me.knighthat.interactivedeck.json.Json
-import me.knighthat.interactivedeck.json.JsonSerializable
 import java.util.UUID
 
-
-class Profile(
-    private val uuid: UUID,
+data class Profile(
+    val uuid: UUID,
     var displayName: String,
     var isDefault: Boolean,
     private var columns: Int,
     private var rows: Int,
     private var gap: Int,
-    private val buttons: MutableList<IButton>
-) : JsonSerializable {
-
+    val buttons: MutableList<IButton>
+) {
     companion object {
         fun fromJson(json: JsonObject): Profile {
             if (!json.has("uuid") ||
@@ -58,57 +64,5 @@ class Profile(
             val btn = IButton(it.asJsonObject)
             this.buttons.add(btn)
         }
-    }
-
-    fun uuid(): UUID {
-        return uuid
-    }
-
-    fun displayName(): String {
-        return displayName
-    }
-
-    fun columns(): Int {
-        return columns
-    }
-
-    fun rows(): Int {
-        return rows
-    }
-
-    fun gap(): Int {
-        return gap
-    }
-
-    fun buttons(): MutableList<IButton> {
-        return this.buttons
-    }
-
-    override fun serialize(): JsonObject {
-        /* Template
-         * {
-         *      "uuid": $uuid,
-         *      "displayName": $displayName,
-         *      "default": $isDefault,
-         *      "rows": $rows,
-         *      "columns": $columns,
-         *      "gap": $gap,
-         *      "buttons":
-         *      [
-         *          buttons
-         *      ]
-         * }
-         */
-        val json = JsonObject()
-
-        json.add("uuid", Json.parse(uuid()))
-        json.add("displayName", Json.parse(displayName()))
-        json.add("default", Json.parse(isDefault))
-        json.add("rows", Json.parse(rows()))
-        json.add("columns", Json.parse(columns()))
-        json.add("gap", Json.parse(gap()))
-        json.add("buttons", Json.parse(buttons()))
-
-        return json
     }
 }
