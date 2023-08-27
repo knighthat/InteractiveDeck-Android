@@ -18,7 +18,9 @@ public class Settings {
         editor.putString( "port", String.valueOf( port ) );
         editor.apply();
 
-        Log.deb( "Saved " + address() + ":" + port() );
+        String msg = "Saved %s:%s for next login";
+        msg = String.format( msg, address(), port() );
+        Log.info( msg, true );
     }
 
     public static String address() {

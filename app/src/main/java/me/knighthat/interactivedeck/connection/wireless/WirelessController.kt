@@ -1,12 +1,12 @@
 package me.knighthat.interactivedeck.connection.wireless
 
+import com.google.gson.JsonParseException
+import com.google.gson.JsonParser
 import kotlinx.coroutines.runBlocking
-import me.knighthat.interactivedeck.activity.DefaultActivity
 import me.knighthat.interactivedeck.connection.request.PairRequest
 import me.knighthat.interactivedeck.connection.request.Request
 import me.knighthat.interactivedeck.connection.request.RequestHandler
 import me.knighthat.interactivedeck.console.Log
-import me.knighthat.interactivedeck.json.Json
 import me.knighthat.interactivedeck.vars.Settings
 import me.knighthat.interactivedeck.vars.Settings.BUFFER
 import java.io.IOException
@@ -49,8 +49,7 @@ class WirelessController(ip: String, port: Int) : Thread() {
             e.printStackTrace()
         } catch (e: ConnectException) {
             //TODO Handle timeout
-            Log.deb("Connection timeout! Resetting...")
-            DefaultActivity.toast("Connection timeout!")
+            Log.warn("Connection timeout!")
             interrupt()
         } finally {
             Settings.saveLastHost(ip, port)
@@ -73,11 +72,12 @@ class WirelessController(ip: String, port: Int) : Thread() {
             runBlocking {
                 finalStr = finalStr.plus(decoded)
 
-                val json = Json.validate(finalStr)
-                if (json != null) {
+                try {
+                    val json = JsonParser.parseString(finalStr).asJsonObject
                     val request = Request.parse(json)
                     RequestHandler.process(request)
                     finalStr = ""
+                } catch (ignored: JsonParseException) {
                 }
             }
         }

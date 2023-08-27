@@ -61,7 +61,7 @@ data class Profile(
 
         this.buttons.clear()
         json.getAsJsonArray("buttons").forEach {
-            val btn = IButton(it.asJsonObject)
+            val btn = IButton.fromJson(it.asJsonObject)
             this.buttons.add(btn)
         }
     }
