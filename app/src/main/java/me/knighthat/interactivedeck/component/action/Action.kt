@@ -1,25 +1,18 @@
 package me.knighthat.interactivedeck.component.action
 
 import com.google.gson.JsonObject
-import com.google.gson.JsonPrimitive
 import me.knighthat.interactivedeck.component.ibutton.IButton
+import me.knighthat.interactivedeck.json.JsonSerializable
 
-open class Action(type: ActionType, button: IButton) {
-
+open class Action(
+    private val type: ActionType,
     private val button: IButton
-    private val type: ActionType
+) : JsonSerializable {
 
-    init {
-        this.type = type
-        this.button = button
-    }
-
-    fun json(): JsonObject {
-        val uuid = this.button.uuid.toString()
-
+    override fun serialize(): JsonObject {
         val json = JsonObject()
-        json.add("action", this.type.json())
-        json.add("uuid", JsonPrimitive(uuid))
+        json.add("action", type.serialize())
+        json.addProperty("uuid", button.uuid.toString())
 
         return json
     }

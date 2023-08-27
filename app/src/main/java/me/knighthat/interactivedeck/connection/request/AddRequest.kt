@@ -1,11 +1,10 @@
 package me.knighthat.interactivedeck.connection.request
 
 import com.google.gson.JsonArray
-import me.knighthat.interactivedeck.json.Json
 
-class AddRequest(uuids: Iterable<String>) : Request(RequestType.ADD, JsonArray()) {
+class AddRequest(uuids: Collection<String>) : Request(RequestType.ADD, JsonArray(uuids.size)) {
 
     init {
-        uuids.forEach { content.asJsonArray.add(Json.parse(it)) }
+        uuids.forEach(content.asJsonArray::add)
     }
 }

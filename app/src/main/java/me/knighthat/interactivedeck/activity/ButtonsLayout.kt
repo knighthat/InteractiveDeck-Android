@@ -3,6 +3,8 @@ package me.knighthat.interactivedeck.activity
 import android.annotation.SuppressLint
 import android.os.Bundle
 import android.widget.GridLayout
+import androidx.activity.OnBackPressedCallback
+import androidx.annotation.MainThread
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import me.knighthat.interactivedeck.R
@@ -25,6 +27,16 @@ class ButtonsLayout : AppCompatActivity() {
 
         layout = findViewById(R.id.buttons_layout)
 
+        startObservation()
+
+        onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                handleBackPress()
+            }
+        })
+    }
+
+    private fun startObservation() {
         Memory.aLive.observe(this) {
             layout.removeAllViews()
 
@@ -44,24 +56,20 @@ class ButtonsLayout : AppCompatActivity() {
         }
     }
 
+    @MainThread
     private fun switchProfile(task: Task) {
         if (task !is GotoPage) return
-
-        val profile = Memory.getProfile(task.uuid) ?: return
-        Memory.active = profile
+        Memory.active = Memory.getProfile(task.uuid) ?: return
     }
 
-    override fun onBackPressed() {
-
+    @MainThread
+    private fun handleBackPress() {
         val confirm = AlertDialog.Builder(this)
         confirm.setTitle("Disconnect")
         confirm.setMessage("Are you sure you disconnect from host and go back to main menu?")
         confirm.setPositiveButton("Yes") { _, _ ->
-            super.onBackPressed()
-
             if (WirelessController.SOCKET != null)
                 WirelessController.SOCKET!!.close()
-            finish()
         }
         confirm.setNegativeButton("No") { _, _ -> }
         confirm.show()
