@@ -14,14 +14,14 @@
             android:roundIcon="@mipmap/ic_launcher_round"
             android:supportsRtl="true"
             android:theme="@style/Theme.InteractiveDeckAndroid"
-            tools:targetApi="31">
+            tools:targetApi="33">
         <activity
                 android:name=".activity.DefaultActivity"
                 android:exported="true"
-                android:screenOrientation="sensorLandscape">
+                android:screenOrientation="sensorLandscape"
+                android:theme="@style/Theme.AppCompat.NoActionBar">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
@@ -29,7 +29,7 @@
                 android:name=".activity.ButtonsLayout"
                 android:exported="false"
                 android:screenOrientation="sensorLandscape"
-                android:theme="@style/Theme.Material3.Dark.NoActionBar" />
+                android:theme="@style/Theme.AppCompat.NoActionBar" />
     </application>
 
 </manifest>
