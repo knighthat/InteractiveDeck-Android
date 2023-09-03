@@ -1,17 +1,40 @@
-Turn your Android phone into a "**_Macro Keypad_**"
+<div align="center">
+  <p>Turn your Android phone into a <b><i>Macro Keypad</i></b></p>
+  <br><br>
+  <div class="code-related-badges">
+    <picture>
+      <img src="https://custom-icon-badges.demolab.com/github/issues-raw/knighthat/InteractiveDeck-Android?logo=issue" alt="open-issue-count">
+    </picture>
+    <picture>
+      <img src="https://custom-icon-badges.demolab.com/github/license/knighthat/InteractiveDeck-Android?logo=law" alt="repository-license">
+    </picture>
+    <picture>
+      <img src="https://custom-icon-badges.demolab.com/github/v/tag/knighthat/InteractiveDeck-Android?logo=tag&logoColor=white" alt="latest-update-tag">
+    </picture>
+  </div>
+  <br>
+  <div class="external-links">
+    <a href="https://github.com/knighthat/InteractiveDeck-Android/releases">
+        <img src="https://custom-icon-badges.demolab.com/badge/-Download-28a745?style=for-the-badge&logo=download&logoColor=white" alt="download-button">
+    </a>
+    <a href="https://github.com/knighthat/InteractiveDeck-Android/issues">
+      <img src="https://custom-icon-badges.demolab.com/badge/-Open%20Issue-6f42c1?style=for-the-badge&logoColor=white&logo=issue-opened" alt="open-issue-button">
+    </a>
+  </div>
+</div>
 
 ---
 
 # Features
 
-# General
+## General
 
 🎯 Easy to use, straight forward.<br>
 🔲 Customizable, button's foreground/background/text can be changed.<br>
 🚀 Fast to connect, responsive to touch/update between devices.<br>
 ⚖️ Lightweight, built using minimal resources to maximize performance.
 
-# Core Functions
+## Core Functions
 
 📑 Multiple Pages (Profiles)
 
@@ -28,9 +51,11 @@ Turn your Android phone into a "**_Macro Keypad_**"
 - Label
 - Background
 - Foreground (Font Color)
-- Task (Its Usage)
-    - Executing BASH Script
-    - Switch Profile on Mobile Device
+
+:memo: Task (Makes button executable)
+
+- Executing BASH Script
+- Switch Profile on Mobile Device
 
 # Installation
 
