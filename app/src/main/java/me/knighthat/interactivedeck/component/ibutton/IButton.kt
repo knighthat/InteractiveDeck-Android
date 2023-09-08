@@ -1,6 +1,5 @@
 package me.knighthat.interactivedeck.component.ibutton
 
-import android.os.Looper
 import android.widget.GridLayout
 import androidx.annotation.MainThread
 import androidx.appcompat.widget.AppCompatButton
@@ -42,16 +41,15 @@ data class IButton(
         layoutParams = params
     }
 
-    @MainThread
-    fun update(json: JsonObject) {
-        if (Looper.myLooper() != Looper.getMainLooper())
-            EventHandler.post { update(json) }
+    fun update(json: JsonObject) = EventHandler.post { update0(json) }
 
+    @MainThread
+    private fun update0(json: JsonObject) {
         if (json.has("icon"))
-            update(json["icon"].asJsonObject)
+            update0(json["icon"].asJsonObject)
 
         if (json.has("label"))
-            update(json["label"].asJsonObject)
+            update0(json["label"].asJsonObject)
 
         if (json.has("background")) {
             val color = fromJson(json, "background")
