@@ -40,18 +40,21 @@ class ButtonsLayout : AppCompatActivity() {
         Memory.aLive.observe(this) {
             layout.removeAllViews()
 
-            it.buttons.forEach { btn ->
-                btn.setOnClickListener {
+            layout.columnCount = it.columns()
+            layout.rowCount = it.rows()
 
-                    if (btn.task == null) {
-                        val action = PressAction(btn)
-                        val request = ActionRequest(action)
+            for (button in it.buttons) {
+                if (!button.hasOnClickListeners())
+                    button.setOnClickListener {
+                        if (button.task == null) {
+                            val action = PressAction(button)
+                            val request = ActionRequest(action)
 
-                        WirelessSender.send(request)
-                    } else
-                        this.switchProfile(btn.task!!)
-                }
-                layout.addView(btn)
+                            WirelessSender.send(request)
+                        } else
+                            this.switchProfile(button.task!!)
+                    }
+                layout.addView(button)
             }
         }
     }
@@ -59,7 +62,10 @@ class ButtonsLayout : AppCompatActivity() {
     @MainThread
     private fun switchProfile(task: Task) {
         if (task !is GotoPage) return
-        Memory.active = Memory.getProfile(task.uuid) ?: return
+
+        Memory
+            .getProfile(task.uuid)
+            .ifPresent { Memory.active = it }
     }
 
     @MainThread
