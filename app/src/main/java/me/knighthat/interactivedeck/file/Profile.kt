@@ -22,7 +22,7 @@ data class Profile(
     val uuid: UUID,
     var displayName: String,
     val isDefault: Boolean,
-    val buttons: MutableList<IButton>,
+    private val buttons: MutableList<IButton>,
     private var columns: Int,
     private var rows: Int,
     private var gap: Int
@@ -53,6 +53,9 @@ data class Profile(
 
     fun gap(): Int = this.gap
 
+    @Synchronized
+    fun buttons() = this.buttons
+
     fun update(json: JsonObject) = EventHandler.post { update0(json) }
 
     @MainThread
@@ -81,7 +84,7 @@ data class Profile(
             val json = it.asJsonObject
             val button = IButton.fromJson(json)
 
-            buttons.add(button)
+            buttons().add(button)
             Memory.add(button)
         }
     }
@@ -92,7 +95,7 @@ data class Profile(
             val uuid = UUID.fromString(it.asString)
             toBeDeleted.add(uuid)
         }
-        val buttons = this.buttons.iterator()
+        val buttons = buttons().iterator()
         while (buttons.hasNext()) {
             val button = buttons.next()
             if (!toBeDeleted.contains(button.uuid))
