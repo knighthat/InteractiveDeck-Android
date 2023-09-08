@@ -10,7 +10,6 @@
 
 package me.knighthat.interactivedeck.file
 
-import android.os.Looper
 import androidx.annotation.MainThread
 import com.google.gson.JsonArray
 import com.google.gson.JsonObject
@@ -54,11 +53,10 @@ data class Profile(
 
     fun gap(): Int = this.gap
 
-    @MainThread
-    fun update(json: JsonObject) {
-        if (Looper.myLooper() != Looper.getMainLooper())
-            EventHandler.post { update(json) }
+    fun update(json: JsonObject) = EventHandler.post { update0(json) }
 
+    @MainThread
+    private fun update0(json: JsonObject) {
         if (json.has("displayName"))
             this.displayName = json["displayName"].asString
 
