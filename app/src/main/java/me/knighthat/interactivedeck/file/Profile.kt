@@ -10,41 +10,37 @@
 
 package me.knighthat.interactivedeck.file
 
+import android.os.Looper
+import androidx.annotation.MainThread
+import com.google.gson.JsonArray
 import com.google.gson.JsonObject
 import me.knighthat.interactivedeck.component.ibutton.IButton
-import me.knighthat.interactivedeck.exception.ProfileFormatException
+import me.knighthat.interactivedeck.event.EventHandler
+import me.knighthat.interactivedeck.vars.Memory
 import java.util.UUID
 
 data class Profile(
     val uuid: UUID,
     var displayName: String,
-    var isDefault: Boolean,
+    val isDefault: Boolean,
+    val buttons: MutableList<IButton>,
     private var columns: Int,
     private var rows: Int,
-    private var gap: Int,
-    val buttons: MutableList<IButton>
+    private var gap: Int
 ) {
     companion object {
         fun fromJson(json: JsonObject): Profile {
-            if (!json.has("uuid") ||
-                !json.has("displayName") ||
-                !json.has("default") ||
-                !json.has("rows") ||
-                !json.has("columns") ||
-                !json.has("gap") ||
-                !json.has("buttons")
-            )
-                throw ProfileFormatException("Missing information")
-
             val idStr = json["uuid"].asString
+            val isDefault = json["default"].asBoolean
+
             val profile = Profile(
                 UUID.fromString(idStr),
                 "",
-                false,
+                isDefault,
+                ArrayList(),
                 1,
                 1,
                 0,
-                ArrayList()
             )
             profile.update(json)
 
@@ -52,17 +48,59 @@ data class Profile(
         }
     }
 
-    fun update(json: JsonObject) {
-        this.displayName = json["displayName"].asString
-        this.isDefault = json["default"].asBoolean
-        this.columns = json["columns"].asInt
-        this.rows = json["rows"].asInt
-        this.gap = json["gap"].asInt
+    fun columns(): Int = this.columns
 
-        this.buttons.clear()
-        json.getAsJsonArray("buttons").forEach {
-            val btn = IButton.fromJson(it.asJsonObject)
-            this.buttons.add(btn)
+    fun rows(): Int = this.rows
+
+    fun gap(): Int = this.gap
+
+    @MainThread
+    fun update(json: JsonObject) {
+        if (Looper.myLooper() != Looper.getMainLooper())
+            EventHandler.post { update(json) }
+
+        if (json.has("displayName"))
+            this.displayName = json["displayName"].asString
+
+        if (json.has("columns"))
+            this.columns = json["columns"].asInt
+
+        if (json.has("rows"))
+            this.rows = json["rows"].asInt
+
+        if (json.has("gap"))
+            this.gap = json["gap"].asInt
+
+        if (json.has("buttons"))
+            addButtons(json["buttons"].asJsonArray)
+
+        if (Memory.active == this)
+            Memory.active = this
+    }
+
+    fun addButtons(array: JsonArray) {
+        array.forEach {
+            val json = it.asJsonObject
+            val button = IButton.fromJson(json)
+
+            buttons.add(button)
+            Memory.add(button)
+        }
+    }
+
+    fun removeButtons(array: JsonArray) {
+        val toBeDeleted = ArrayList<UUID>()
+        array.forEach {
+            val uuid = UUID.fromString(it.asString)
+            toBeDeleted.add(uuid)
+        }
+        val buttons = this.buttons.iterator()
+        while (buttons.hasNext()) {
+            val button = buttons.next()
+            if (!toBeDeleted.contains(button.uuid))
+                continue
+            buttons.remove()
+            Memory.remove(button)
         }
     }
 }
