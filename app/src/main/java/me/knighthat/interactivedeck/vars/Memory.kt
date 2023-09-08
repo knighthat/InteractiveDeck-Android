@@ -13,53 +13,85 @@ package me.knighthat.interactivedeck.vars
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
 import me.knighthat.interactivedeck.component.ibutton.IButton
 import me.knighthat.interactivedeck.event.EventHandler
 import me.knighthat.interactivedeck.file.Profile
+import java.util.Optional
 import java.util.UUID
 
-class Memory : ViewModel() {
+class Memory {
 
     companion object {
-        private val _internal = ViewModelProvider(EventHandler.DEF_ACTIVITY)[Memory::class.java]
+        @Volatile
+        lateinit var activeProfile: ActiveProfile
 
-        val list: MutableList<Profile> get() = _internal._profiles
-
-        fun add(profile: Profile) {
-            list.add(profile)
-            profile.buttons.forEach(buttons::add)
-        }
-
-        fun getProfile(uuid: UUID): Profile? {
-            list.forEach {
-                if (it.uuid.equals(uuid))
-                    return it
-            }
-            return null
-        }
-
-        val aLive: LiveData<Profile> get() = _internal._active
+        val aLive: LiveData<Profile> get() = activeProfile.active
         var active: Profile?
             get() = aLive.value
             set(value) {
                 EventHandler.post {
-                    _internal._active.value = value
+                    activeProfile.active.value = value
                 }
             }
 
-        val buttons: MutableList<IButton> get() = _internal._buttons
+        @Volatile
+        private lateinit var _default: Profile
 
-        fun getButton(uuid: UUID): IButton? {
-            buttons.forEach {
-                if (it.uuid.equals(uuid))
-                    return it
-            }
-            return null
+        private val profiles = ArrayList<Profile>()
+
+        @Synchronized
+        fun profiles() = profiles
+
+        @Synchronized
+        fun getProfile(uuid: UUID): Optional<Profile> {
+            var profile: Profile? = null
+            for (p in profiles())
+                if (uuid == p.uuid) {
+                    profile = p
+                    break
+                }
+            return Optional.ofNullable(profile)
         }
-    }
 
-    private val _active = MutableLiveData<Profile>()
-    private val _profiles = ArrayList<Profile>()
-    private val _buttons = ArrayList<IButton>()
+        @Synchronized
+        fun add(profile: Profile) {
+            profiles().add(profile)
+            profile.buttons.forEach(Memory::add)
+            if (profile.isDefault) {
+                _default = profile
+                active = profile
+            }
+        }
+
+        @Synchronized
+        fun remove(profile: Profile): Boolean {
+            if (active == profile)
+                active = _default
+            return profiles().remove(profile)
+        }
+
+        private val buttons = ArrayList<IButton>()
+
+        @Synchronized
+        fun buttons(): MutableList<IButton> = buttons
+
+        @Synchronized
+        fun getButton(uuid: UUID): Optional<IButton> {
+            var button: IButton? = null
+            for (b in buttons())
+                if (uuid == b.uuid) {
+                    button = b
+                    break
+                }
+            return Optional.ofNullable(button)
+        }
+
+        @Synchronized
+        fun add(button: IButton) = buttons().add(button)
+
+        @Synchronized
+        fun remove(button: IButton): Boolean = buttons().remove(button)
+    }
 }
+
+class ActiveProfile(val active: MutableLiveData<Profile> = MutableLiveData()) : ViewModel()
