@@ -58,6 +58,18 @@ data class Profile(
 
     fun update(json: JsonObject) = EventHandler.post { update0(json) }
 
+    /*
+     * There is a limit of how many buttons can be displayed at once
+     * and it depends on how big (in resolution) your screen is.<br>
+     *
+     * The smallest at the time of writing is 176w x 96h.<br>
+     *
+     * An easy way to get the number of buttons can be showed is:
+     * - Width: 176 * columns() <= screen's width
+     * - Height 96 * rows() <= screen's height
+     *
+     * If the number exceed, only first column or row will be showed
+     */
     @MainThread
     private fun update0(json: JsonObject) {
         if (json.has("displayName"))
