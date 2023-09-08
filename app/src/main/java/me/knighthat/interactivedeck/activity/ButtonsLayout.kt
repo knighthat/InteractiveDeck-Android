@@ -43,7 +43,7 @@ class ButtonsLayout : AppCompatActivity() {
             layout.columnCount = it.columns()
             layout.rowCount = it.rows()
 
-            for (button in it.buttons) {
+            for (button in it.buttons()) {
                 if (!button.hasOnClickListeners())
                     button.setOnClickListener {
                         if (button.task == null) {

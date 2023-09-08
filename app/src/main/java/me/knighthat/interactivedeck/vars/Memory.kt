@@ -56,7 +56,7 @@ class Memory {
         @Synchronized
         fun add(profile: Profile) {
             profiles().add(profile)
-            profile.buttons.forEach(Memory::add)
+            profile.buttons().forEach(Memory::add)
             if (profile.isDefault) {
                 _default = profile
                 active = profile
