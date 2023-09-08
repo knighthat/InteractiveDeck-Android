@@ -76,6 +76,7 @@ class ButtonsLayout : AppCompatActivity() {
         confirm.setPositiveButton("Yes") { _, _ ->
             if (WirelessController.SOCKET != null)
                 WirelessController.SOCKET!!.close()
+            finish()
         }
         confirm.setNegativeButton("No") { _, _ -> }
         confirm.show()
