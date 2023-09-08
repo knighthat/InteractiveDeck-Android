@@ -5,11 +5,14 @@ import android.os.Bundle
 import android.widget.Button
 import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.ViewModelProvider
 import com.google.android.material.textfield.TextInputEditText
 import me.knighthat.interactivedeck.R
 import me.knighthat.interactivedeck.connection.wireless.WirelessController
 import me.knighthat.interactivedeck.console.Log
 import me.knighthat.interactivedeck.event.EventHandler
+import me.knighthat.interactivedeck.vars.ActiveProfile
+import me.knighthat.interactivedeck.vars.Memory
 import me.knighthat.interactivedeck.vars.Settings
 import kotlin.system.exitProcess
 
@@ -27,6 +30,7 @@ class DefaultActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         EventHandler.DEF_ACTIVITY = this
+        Memory.activeProfile = ViewModelProvider(this)[ActiveProfile::class.java]
         Settings.PREFERENCES = getSharedPreferences("AppSettings", Context.MODE_PRIVATE)
 
         super.onCreate(savedInstanceState)
