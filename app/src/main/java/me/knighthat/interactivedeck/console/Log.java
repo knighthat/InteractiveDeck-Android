@@ -2,7 +2,6 @@ package me.knighthat.interactivedeck.console;
 
 import android.widget.Toast;
 
-import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
 import me.knighthat.interactivedeck.event.EventHandler;
@@ -21,7 +20,7 @@ public class Log {
             return;
 
         int duration = level.rank > 1 ? Toast.LENGTH_LONG : Toast.LENGTH_SHORT;
-        toast( s, duration ).show();
+        toast( s, duration );
     }
 
     public static void deb( @NotNull String s ) {
@@ -40,14 +39,9 @@ public class Log {
         log( LogLevel.ERROR, s, toast );
     }
 
-    public static void toast( @NotNull String s ) {
-        toast( s, Toast.LENGTH_SHORT ).show();
+    public static void toast( @NotNull String s, int duration ) {
+        EventHandler.post( () -> Toast.makeText( EventHandler.DEF_ACTIVITY, s, duration ).show() );
         log( LogLevel.INFO, "TOAST: " + s, false );
-    }
-
-    @Contract ( pure = true )
-    private static @NotNull Toast toast( @NotNull String s, int duration ) {
-        return Toast.makeText( EventHandler.DEF_ACTIVITY, s, duration );
     }
 
     public enum LogLevel {
