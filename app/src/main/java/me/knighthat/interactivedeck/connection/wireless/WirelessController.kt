@@ -18,6 +18,7 @@ import java.net.Socket
 class WirelessController(ip: String, port: Int) : Thread() {
 
     companion object {
+        val handler = RequestHandler()
         var SOCKET: Socket? = null
     }
 
@@ -39,9 +40,8 @@ class WirelessController(ip: String, port: Int) : Thread() {
                     WirelessSender.send(PairRequest())
 
                     name = "NET/I"
-                    this.handIncomingTraffic(it.getInputStream())
+                    this.handleIncomingTraffic(it.getInputStream())
                     name = "NET"
-
                 }
             SOCKET = null
         } catch (e: IOException) {
@@ -56,29 +56,40 @@ class WirelessController(ip: String, port: Int) : Thread() {
         }
     }
 
-    private fun handIncomingTraffic(stream: InputStream) {
+    private fun handleIncomingTraffic(stream: InputStream) {
         var bytesRead: Int
         var finalStr = ""
         while (stream.read(BUFFER).also { bytesRead = it } != -1) {
-            val decoded = try {
-                String(BUFFER, 0, bytesRead)
-            } catch (e: StringIndexOutOfBoundsException) {
-                break
-            }
+            val decoded = String(BUFFER, 0, bytesRead)
+            val sliced = decoded.split("\u0000")
 
-            Log.deb("Received from host:")
-            Log.deb(decoded)
+            if (sliced.size > 1)
+                for ((i, v) in sliced.withIndex())
+                    when (i) {
+                        0 -> {
+                            finalStr = finalStr.plus(v)
+                            process(finalStr)
+                        }
 
-            runBlocking {
+                        sliced.size - 1 -> finalStr = v
+
+                        else -> process(v)
+                    }
+            else
                 finalStr = finalStr.plus(decoded)
+        }
+    }
 
-                try {
-                    val json = JsonParser.parseString(finalStr).asJsonObject
-                    val request = Request.parse(json)
-                    RequestHandler.process(request)
-                    finalStr = ""
-                } catch (ignored: JsonParseException) {
-                }
+    private fun process(payload: String) {
+        Log.deb("Processing: $payload")
+        runBlocking {
+            try {
+                val json = JsonParser.parseString(payload).asJsonObject
+                val request = Request.fromJson(json)
+                handler.process(request)
+            } catch (e: JsonParseException) {
+                Log.err("Error occurs while parsing request", false)
+                Log.err("Caused by: ${e.message}", false)
             }
         }
     }
