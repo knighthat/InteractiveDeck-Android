@@ -1,9 +1,11 @@
 package me.knighthat.interactivedeck.component.ibutton
 
+import android.os.Looper
 import android.widget.GridLayout
+import androidx.annotation.MainThread
 import androidx.appcompat.widget.AppCompatButton
+import com.google.gson.JsonArray
 import com.google.gson.JsonObject
-import com.google.gson.JsonSyntaxException
 import me.knighthat.interactivedeck.event.EventHandler
 import me.knighthat.interactivedeck.task.GotoPage
 import me.knighthat.interactivedeck.task.Task
@@ -20,46 +22,84 @@ data class IButton(
 
     companion object {
         fun fromJson(json: JsonObject): IButton {
-            if (!json.has("uuid") ||
-                !json.has("background") ||
-                !json.has("foreground") ||
-                !json.has("text") ||
-                !json.has("x") ||
-                !json.has("y")
-            )
-                throw JsonSyntaxException("Not enough argument")
-
             val uuidStr = json["uuid"].asString
             val uuid = UUID.fromString(uuidStr)
             val x = json.getAsJsonPrimitive("x").asInt
             val y = json.getAsJsonPrimitive("y").asInt
 
             val button = IButton(uuid, x, y, null)
-
-            val params = GridLayout.LayoutParams()
-            params.rowSpec = GridLayout.spec(y, 1, 1f)
-            params.columnSpec = GridLayout.spec(x, 1, 1f)
-            button.layoutParams = params
-
             button.update(json)
 
             return button
         }
     }
 
+    init {
+        val params = GridLayout.LayoutParams()
+        params.rowSpec = GridLayout.spec(y, 1, 1f)
+        params.columnSpec = GridLayout.spec(x, 1, 1f)
+
+        layoutParams = params
+    }
+
+    @MainThread
     fun update(json: JsonObject) {
-        val background = json["background"]
-        setBackgroundColor(ColorUtils.parseJson(background))
+        if (Looper.myLooper() != Looper.getMainLooper())
+            EventHandler.post { update(json) }
 
-        val foreground = json["foreground"]
-        setTextColor(ColorUtils.parseJson(foreground))
+        if (json.has("icon"))
+            update(json["icon"].asJsonObject)
 
-        text = json["text"].asString
+        if (json.has("label"))
+            update(json["label"].asJsonObject)
 
-        if (json.has("goto")) {
-            val uuidStr = json["goto"].asString
-            val gotoUuid = UUID.fromString(uuidStr)
-            this.task = GotoPage(gotoUuid)
+        if (json.has("background")) {
+            val color = fromJson(json, "background")
+            setBackgroundColor(color)
         }
+
+        if (json.has("border"))
+            border(json["border"].asJsonArray)
+
+        if (json.has("foreground")) {
+            val color = fromJson(json, "foreground")
+            setTextColor(color)
+        }
+
+        if (json.has("font"))
+            font(json["font"].asJsonObject)
+
+        if (json.has("text"))
+            text = json["text"].asString
+
+        if (json.has("task")) {
+            this.task = null
+            if (!json["task"].isJsonNull)
+                task(json["task"].asJsonObject)
+        }
+    }
+
+    private fun font(json: JsonObject) {
+        // TODO Implement this
+        return
+    }
+
+    private fun border(array: JsonArray) {
+        // TODO Implement this
+        return
+    }
+
+    private fun fromJson(json: JsonObject, property: String): Int {
+        val array = json[property].asJsonArray
+        return ColorUtils.parseJson(array)
+    }
+
+    private fun task(task: JsonObject) {
+        val type = task["action_type"].asString
+        if (!type.equals("SWITCH_PROFILE"))
+            return
+        val goto = task["profile"].asString
+        val uuid = UUID.fromString(goto)
+        this.task = GotoPage(uuid)
     }
 }
