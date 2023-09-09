@@ -4,6 +4,15 @@ plugins {
 }
 
 android {
+    signingConfigs {
+        release {
+            // Replace path below to your key's location (Example in $projectDir/secrets/android-app-signing-key.jks
+            storeFile file('/path/to/android-app-signing-key.jks')
+            storePassword '$ANDROID_STORE_PASSWORD'     // Replace this with your Store Password
+            keyAlias '$ANDROID_KEY_ALIAS'               // Replace this with your Key Alias
+            keyPassword '$ANDROID_KEY_PASSWORD'         // Replace this with your Key Password
+        }
+    }
     namespace 'me.knighthat.interactivedeck'
     compileSdk 33
 
@@ -17,6 +26,7 @@ android {
 
     buildTypes {
         release {
+            signingConfig signingConfigs.release
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
