@@ -24,6 +24,12 @@ android {
         versionName "0.0.2"
     }
 
+    applicationVariants.configureEach { variant ->
+        if (variant.buildType.name == "release")
+            variant.outputs.configureEach {
+                outputFileName = "Interactive Deck ${variant.versionName}.apk"
+            }
+    }
     buildTypes {
         release {
             signingConfig signingConfigs.release
@@ -46,5 +52,5 @@ dependencies {
     implementation 'androidx.appcompat:appcompat:1.6.1'
     implementation 'com.google.android.material:material:1.9.0'
     implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
-    implementation group: 'com.google.code.gson', name: 'gson', version: '2.10.1'
+    implementation 'com.google.code.gson:gson:2.10.1'
 }
