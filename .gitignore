@@ -11,7 +11,11 @@ local.properties
 
 # App
 /app/build/
+/app/release/
 
 # Tests
 app/src/test
 app/src/androidTest
+
+# Signing key
+secrets/android-app-signing-key.jks
