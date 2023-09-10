@@ -1,9 +1,12 @@
 package me.knighthat.interactivedeck.component.ibutton
 
-import android.widget.GridLayout
+import android.graphics.Typeface
+import android.graphics.drawable.GradientDrawable
+import android.graphics.drawable.LayerDrawable
+import android.graphics.drawable.ShapeDrawable
+import android.graphics.drawable.shapes.RectShape
 import androidx.annotation.MainThread
 import androidx.appcompat.widget.AppCompatButton
-import com.google.gson.JsonArray
 import com.google.gson.JsonObject
 import me.knighthat.interactivedeck.event.EventHandler
 import me.knighthat.interactivedeck.task.GotoPage
@@ -83,8 +86,21 @@ data class IButton(
     }
 
     private fun font(json: JsonObject) {
-        // TODO Implement this
-        return
+//        if (json.has("name"))
+//            return
+
+        if (json.has("weight")) {
+            val weight = when (json["weight"].asString) {
+                "bold" -> Typeface.BOLD
+                "italic" -> Typeface.ITALIC
+                "bold|italic" -> Typeface.BOLD_ITALIC
+                else -> Typeface.NORMAL
+            }
+            setTypeface(null, weight)
+        }
+
+        if (json.has("size"))
+            textSize = json["size"].asFloat
     }
 
     private fun repaint() {
