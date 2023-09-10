@@ -44,6 +44,16 @@ class ButtonsLayout : AppCompatActivity() {
             layout.rowCount = it.rows()
 
             for (button in it.buttons()) {
+                val params = GridLayout.LayoutParams()
+                params.rowSpec = GridLayout.spec(button.y, 1, 1f)
+                params.columnSpec = GridLayout.spec(button.x, 1, 1f)
+                params.topMargin = if (button.y == 0) 0 else it.gap()
+                params.bottomMargin = if (button.y == it.rows() - 1) 0 else it.gap()
+                params.leftMargin = if (button.x == 0) 0 else it.gap()
+                params.rightMargin = if (button.x == it.columns() - 1) 0 else it.gap()
+                button.layoutParams = params
+
+
                 if (!button.hasOnClickListeners())
                     button.setOnClickListener {
                         if (button.task == null) {

@@ -39,14 +39,6 @@ data class IButton(
         }
     }
 
-    init {
-        val params = GridLayout.LayoutParams()
-        params.rowSpec = GridLayout.spec(y, 1, 1f)
-        params.columnSpec = GridLayout.spec(x, 1, 1f)
-
-        layoutParams = params
-    }
-
     fun update(json: JsonObject) = EventHandler.post { update0(json) }
 
     @MainThread
