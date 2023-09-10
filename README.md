@@ -42,14 +42,19 @@
 - Remove
 - Modify
     - Title
-    - Columns (up to 6)
-    - Rows (up to 4)
+    - Columns (up to 10)
+    - Rows (up to 10)
     - Gap Between Buttons
 
 🖲️ Buttons
 
 - Label
+    - Custom texts, support UTF-8
+    - Colorful
+    - Supports styling (bold, italic, etc.)
+    - Resizable
 - Background
+- Border
 - Foreground (Font Color)
 
 :memo: Task (Makes button executable)
@@ -61,7 +66,7 @@
 
 > These steps will only guide you to compile this project to .apk file
 
-## Requirements
+## Requirements (Manual)
 
 - JDK 8 or higher (20 is recommended). [DOWNLOAD HERE](https://jdk.java.net/20/).
 - Android SDK 25 or higher.
@@ -76,6 +81,11 @@ Run command `gradlew.bat assembleRelease`, then go to `app/build/outputs/apk/rel
 > You might want to enable execute as program or use command `chmod +x gradlew` before moving forward.
 
 Run command `gradlew assembleRelease`, then go to `app/build/outputs/apk/release/` and copy `app-release-unsigned.apk` to desired Android phone to start the installation.
+
+## Prebuilt
+
+- [ALL RELEASES](https://github.com/knighthat/InteractiveDeck-Android/releases)
+- [BETA/LATEST](https://github.com/knighthat/InteractiveDeck-Android/releases/tag/beta)
 
 # Usage
 
