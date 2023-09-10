@@ -19,6 +19,9 @@ data class IButton(
     var task: Task?
 ) : AppCompatButton(EventHandler.DEF_ACTIVITY) {
 
+    private var backgroundColor = 0
+    private var borderColor = 0
+
     companion object {
         fun fromJson(json: JsonObject): IButton {
             val uuidStr = json["uuid"].asString
@@ -52,12 +55,14 @@ data class IButton(
             update0(json["label"].asJsonObject)
 
         if (json.has("background")) {
-            val color = fromJson(json, "background")
-            setBackgroundColor(color)
+            this.backgroundColor = fromJson(json, "background")
+            repaint()
         }
 
-        if (json.has("border"))
-            border(json["border"].asJsonArray)
+        if (json.has("border")) {
+            this.borderColor = fromJson(json, "border")
+            repaint()
+        }
 
         if (json.has("foreground")) {
             val color = fromJson(json, "foreground")
@@ -82,9 +87,19 @@ data class IButton(
         return
     }
 
-    private fun border(array: JsonArray) {
-        // TODO Implement this
-        return
+    private fun repaint() {
+        if (borderColor == 0)
+            borderColor = backgroundColor
+
+        val background = ShapeDrawable(RectShape())
+        background.paint.color = backgroundColor
+
+        val border = GradientDrawable()
+        border.shape = GradientDrawable.RECTANGLE
+        border.setStroke(3, borderColor)
+
+        val drawable = LayerDrawable(arrayOf(background, border))
+        this.background = drawable
     }
 
     private fun fromJson(json: JsonObject, property: String): Int {
