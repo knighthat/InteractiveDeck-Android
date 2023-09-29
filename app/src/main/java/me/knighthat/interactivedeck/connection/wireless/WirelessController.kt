@@ -7,6 +7,7 @@ import me.knighthat.interactivedeck.connection.request.PairRequest
 import me.knighthat.interactivedeck.connection.request.Request
 import me.knighthat.interactivedeck.connection.request.RequestHandler
 import me.knighthat.interactivedeck.console.Log
+import me.knighthat.interactivedeck.event.EventHandler
 import me.knighthat.interactivedeck.vars.Settings
 import me.knighthat.interactivedeck.vars.Settings.BUFFER
 import java.io.IOException
@@ -44,6 +45,10 @@ class WirelessController(ip: String, port: Int) : Thread() {
                     name = "NET"
                 }
             SOCKET = null
+            val currentActivity = EventHandler.getCurrentActivity() ?: return
+            Log.deb(currentActivity.javaClass.name)
+            currentActivity.finish()
+            EventHandler.setCurrentActivity(null)
         } catch (e: IOException) {
             //TODO Handle exception
             e.printStackTrace()
