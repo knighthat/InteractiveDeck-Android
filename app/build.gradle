@@ -27,7 +27,7 @@ android {
     applicationVariants.configureEach { variant ->
         if (variant.buildType.name == "release")
             variant.outputs.configureEach {
-                outputFileName = "Interactive Deck ${variant.versionName}.apk"
+                outputFileName = "Interactive_Deck-${variant.versionName}-beta.apk"
             }
     }
     buildTypes {
