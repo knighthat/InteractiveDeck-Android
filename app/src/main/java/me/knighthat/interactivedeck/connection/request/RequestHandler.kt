@@ -78,7 +78,7 @@ class RequestHandler {
 
         EventHandler.post {
             val intent = Intent(EventHandler.DEF_ACTIVITY, ButtonsLayout::class.java)
-            EventHandler.DEF_ACTIVITY.startActivities(Array(1) { intent })
+            EventHandler.DEF_ACTIVITY.startActivity(intent)
         }
     }
 
