@@ -9,17 +9,20 @@
  */
 package me.knighthat.interactivedeck.event;
 
+import android.app.Activity;
 import android.os.Handler;
 import android.os.Looper;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import me.knighthat.interactivedeck.activity.DefaultActivity;
 
 public class EventHandler {
 
     private static final @NotNull Handler HANDLER;
-    public static @NotNull DefaultActivity DEF_ACTIVITY;
+    public static DefaultActivity DEF_ACTIVITY;
+    private static Activity currentActivity;
 
     static {
         HANDLER = new Handler( Looper.getMainLooper() );
@@ -27,5 +30,13 @@ public class EventHandler {
 
     public static void post( @NotNull Runnable runnable ) {
         HANDLER.post( runnable );
+    }
+
+    public static @Nullable Activity getCurrentActivity() {
+        return currentActivity;
+    }
+
+    public static void setCurrentActivity( @Nullable Activity activity ) {
+        currentActivity = activity;
     }
 }

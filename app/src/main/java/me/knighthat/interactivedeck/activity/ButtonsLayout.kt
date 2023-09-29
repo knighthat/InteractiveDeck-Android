@@ -12,6 +12,7 @@ import me.knighthat.interactivedeck.component.action.PressAction
 import me.knighthat.interactivedeck.connection.request.ActionRequest
 import me.knighthat.interactivedeck.connection.wireless.WirelessController
 import me.knighthat.interactivedeck.connection.wireless.WirelessSender
+import me.knighthat.interactivedeck.event.EventHandler
 import me.knighthat.interactivedeck.task.GotoPage
 import me.knighthat.interactivedeck.task.Task
 import me.knighthat.interactivedeck.vars.Memory
@@ -22,6 +23,8 @@ class ButtonsLayout : AppCompatActivity() {
 
     @SuppressLint("ResourceType")
     override fun onCreate(savedInstanceState: Bundle?) {
+        EventHandler.setCurrentActivity(this)
+
         super.onCreate(savedInstanceState)
         setContentView(R.layout.buttons_layout)
 
