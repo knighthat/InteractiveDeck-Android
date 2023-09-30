@@ -67,6 +67,7 @@ class WirelessController(ip: String, port: Int) : Thread() {
         while (stream.read(BUFFER).also { bytesRead = it } != -1) {
             val decoded = String(BUFFER, 0, bytesRead)
             val sliced = decoded.split("\u0000")
+            Log.deb(sliced.toString())
 
             if (sliced.size > 1)
                 for ((i, v) in sliced.withIndex())
