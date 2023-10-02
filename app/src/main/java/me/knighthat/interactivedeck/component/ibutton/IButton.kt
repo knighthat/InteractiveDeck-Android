@@ -8,6 +8,7 @@ import android.graphics.drawable.shapes.RectShape
 import androidx.annotation.MainThread
 import androidx.appcompat.widget.AppCompatButton
 import com.google.gson.JsonObject
+import me.knighthat.interactivedeck.component.LiveProperty
 import me.knighthat.interactivedeck.event.EventHandler
 import me.knighthat.interactivedeck.task.GotoPage
 import me.knighthat.interactivedeck.task.Task
@@ -20,7 +21,7 @@ data class IButton(
     val x: Int,
     val y: Int,
     var task: Task?
-) : AppCompatButton(EventHandler.DEF_ACTIVITY) {
+) : AppCompatButton(EventHandler.DEF_ACTIVITY), LiveProperty {
 
     private var backgroundColor = 0
     private var borderColor = 0
@@ -38,11 +39,9 @@ data class IButton(
             return button
         }
     }
-
-    fun update(json: JsonObject) = EventHandler.post { update0(json) }
-
+    
     @MainThread
-    private fun update0(json: JsonObject) {
+    override fun update0(json: JsonObject) {
         if (json.has("icon"))
             update0(json["icon"].asJsonObject)
 

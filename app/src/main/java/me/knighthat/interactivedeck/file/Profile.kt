@@ -13,8 +13,8 @@ package me.knighthat.interactivedeck.file
 import androidx.annotation.MainThread
 import com.google.gson.JsonArray
 import com.google.gson.JsonObject
+import me.knighthat.interactivedeck.component.LiveProperty
 import me.knighthat.interactivedeck.component.ibutton.IButton
-import me.knighthat.interactivedeck.event.EventHandler
 import me.knighthat.interactivedeck.vars.Memory
 import java.util.UUID
 
@@ -26,7 +26,7 @@ data class Profile(
     private var columns: Int,
     private var rows: Int,
     private var gap: Int
-) {
+) : LiveProperty {
     companion object {
         fun fromJson(json: JsonObject): Profile {
             val idStr = json["uuid"].asString
@@ -56,8 +56,6 @@ data class Profile(
     @Synchronized
     fun buttons() = this.buttons
 
-    fun update(json: JsonObject) = EventHandler.post { update0(json) }
-
     /*
      * There is a limit of how many buttons can be displayed at once
      * and it depends on how big (in resolution) your screen is.<br>
@@ -71,7 +69,7 @@ data class Profile(
      * If the number exceed, only first column or row will be showed
      */
     @MainThread
-    private fun update0(json: JsonObject) {
+    override fun update0(json: JsonObject) {
         if (json.has("displayName"))
             this.displayName = json["displayName"].asString
 
