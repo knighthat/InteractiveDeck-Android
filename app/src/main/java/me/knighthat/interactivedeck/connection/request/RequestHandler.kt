@@ -13,6 +13,7 @@ package me.knighthat.interactivedeck.connection.request
 import android.content.Intent
 import com.google.gson.JsonArray
 import me.knighthat.interactivedeck.activity.ButtonsLayout
+import me.knighthat.interactivedeck.connection.Inflater
 import me.knighthat.interactivedeck.console.Log
 import me.knighthat.interactivedeck.event.EventHandler
 import me.knighthat.interactivedeck.file.Profile
@@ -31,40 +32,19 @@ class RequestHandler {
         }
 
         when (type) {
-            Request.RequestType.ADD -> {
-                val tRequest = request as TargetedRequest
-                val reContent = tRequest.content.asJsonArray
-                if (tRequest.uuid == null)
-                    addProfiles(reContent)
-                else
-                    addButtons(tRequest.uuid, reContent)
-            }
+            Request.RequestType.ADD ->
+                add(
+                    (request as TargetedRequest).uuid,
+                    Inflater.inflate(content.asJsonArray)
+                )
 
-            Request.RequestType.REMOVE -> {
-                val tRequest = request as TargetedRequest
-                val reContent = tRequest.content.asJsonArray
-                if (tRequest.uuid == null)
-                    removeProfiles(reContent)
-                else
-                    removeButtons(tRequest.uuid, reContent)
-            }
+            Request.RequestType.REMOVE ->
+                remove(
+                    (request as TargetedRequest).uuid,
+                    content.asJsonArray
+                )
 
-            Request.RequestType.UPDATE -> {
-                val tRequest = request as TargetedRequest
-                val reContent = tRequest.content.asJsonObject
-
-                if (tRequest.uuid == null)
-                    return
-
-                when (tRequest.target) {
-                    TargetedRequest.Target.BUTTON ->
-                        Memory.getButton(tRequest.uuid).ifPresent { it.update(reContent) }
-
-                    TargetedRequest.Target.PROFILE ->
-                        Memory.getProfile(tRequest.uuid).ifPresent { it.update(reContent) }
-                }
-            }
-
+            Request.RequestType.UPDATE -> update(request)
             Request.RequestType.PAIR -> pair(content.asJsonArray)
             else -> {}
         }
@@ -82,35 +62,42 @@ class RequestHandler {
         }
     }
 
-    private fun addButtons(pUuid: UUID, array: JsonArray) {
-        Memory
-            .getProfile(pUuid)
-            .ifPresent { it.addButtons(array) }
-    }
-
-    private fun addProfiles(array: JsonArray) {
-        array.forEach {
-            val json = it.asJsonObject
-            val profile = Profile.fromJson(json)
-            Memory.add(profile)
-        }
-    }
-
-    private fun removeButtons(pUuid: UUID, array: JsonArray) {
-        Memory
-            .getProfile(pUuid)
-            .ifPresent { it.removeButtons(array) }
-    }
-
-    private fun removeProfiles(array: JsonArray) {
-        for (it in array) {
-            val idStr = it.asString
-
-            Log.deb("Deleting: $idStr")
-
+    private fun add(uuid: UUID?, content: JsonArray) {
+        if (uuid == null)
+            content.forEach {
+                val json = it.asJsonObject
+                val profile = Profile.fromJson(json)
+                Memory.add(profile)
+            }
+        else
             Memory
-                .getProfile(UUID.fromString(idStr))
-                .ifPresent(Memory::remove)
+                .getProfile(uuid)
+                .ifPresent { it.addButtons(content) }
+    }
+
+    private fun remove(uuid: UUID?, content: JsonArray) {
+        if (uuid == null)
+            for (it in content) {
+                val idStr = it.asString
+                Memory
+                    .getProfile(UUID.fromString(idStr))
+                    .ifPresent(Memory::remove)
+            }
+        else
+            Memory
+                .getProfile(uuid)
+                .ifPresent { it.removeButtons(content) }
+    }
+
+    private fun update(request: Request) {
+        val uuid = (request as TargetedRequest).uuid ?: return
+        val target = request.target
+
+        when (target) {
+            TargetedRequest.Target.BUTTON -> Memory.getButton(uuid)
+            TargetedRequest.Target.PROFILE -> Memory.getProfile(uuid)
+        }.ifPresent {
+            it.update(request.content.asJsonObject)
         }
     }
 }
