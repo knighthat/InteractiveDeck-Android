@@ -5,12 +5,13 @@ import com.google.gson.JsonNull
 import com.google.gson.JsonObject
 import me.knighthat.interactivedeck.connection.wireless.WirelessController
 import me.knighthat.interactivedeck.connection.wireless.WirelessSender
+import me.knighthat.interactivedeck.json.JsonSerializable
 import java.util.UUID
 
 open class Request(
     val type: RequestType,
     val content: JsonElement
-) {
+) : JsonSerializable {
 
     companion object {
         fun fromJson(json: JsonObject): Request {
@@ -47,13 +48,15 @@ open class Request(
             WirelessSender.send(this)
     }
 
-    override fun toString(): String {
+    override fun serialize(): JsonObject {
         val json = JsonObject()
         json.addProperty("type", type.name)
         json.add("content", this.content)
 
-        return json.toString()
+        return json
     }
+
+    override fun toString(): String = serialize().toString()
 
     enum class RequestType {
         ADD, REMOVE, UPDATE, PAIR, ACTION;
