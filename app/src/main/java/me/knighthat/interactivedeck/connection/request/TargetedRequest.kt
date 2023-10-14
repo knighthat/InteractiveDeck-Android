@@ -11,16 +11,23 @@
 package me.knighthat.interactivedeck.connection.request
 
 import com.google.gson.JsonElement
+import com.google.gson.JsonObject
 import java.util.UUID
 
-class TargetedRequest(
+open class TargetedRequest(
     type: RequestType,
     val target: Target,
     val uuid: UUID?,
     payload: JsonElement
 ) : Request(type, payload) {
 
-    enum class Target {
-        PROFILE, BUTTON;
+    override fun serialize(): JsonObject {
+        val json = super.serialize()
+        json.addProperty("target", target.name)
+        json.addProperty("uuid", uuid.toString())
+
+        return json
     }
+
+    enum class Target { PROFILE, BUTTON; }
 }
