@@ -1,7 +1,7 @@
 package me.knighthat.interactivedeck.connection.wireless
 
 import me.knighthat.interactivedeck.connection.request.Request
-import me.knighthat.interactivedeck.console.Log
+import me.knighthat.lib.logging.Log
 import java.io.IOException
 import java.io.OutputStream
 import java.util.concurrent.BlockingQueue

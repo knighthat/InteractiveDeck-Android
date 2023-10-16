@@ -14,10 +14,10 @@ import android.content.Intent
 import com.google.gson.JsonArray
 import me.knighthat.interactivedeck.activity.ButtonsLayout
 import me.knighthat.interactivedeck.connection.Inflater
-import me.knighthat.interactivedeck.console.Log
 import me.knighthat.interactivedeck.event.EventHandler
 import me.knighthat.interactivedeck.file.Profile
 import me.knighthat.interactivedeck.vars.Memory
+import me.knighthat.lib.logging.Log
 import java.util.UUID
 
 class RequestHandler {

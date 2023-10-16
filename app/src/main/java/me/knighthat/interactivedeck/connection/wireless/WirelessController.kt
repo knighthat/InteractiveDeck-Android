@@ -6,15 +6,14 @@ import kotlinx.coroutines.runBlocking
 import me.knighthat.interactivedeck.connection.request.PairRequest
 import me.knighthat.interactivedeck.connection.request.Request
 import me.knighthat.interactivedeck.connection.request.RequestHandler
-import me.knighthat.interactivedeck.console.Log
 import me.knighthat.interactivedeck.event.EventHandler
 import me.knighthat.interactivedeck.vars.Settings
 import me.knighthat.interactivedeck.vars.Settings.BUFFER
+import me.knighthat.lib.logging.Log
 import java.io.IOException
 import java.io.InputStream
 import java.net.ConnectException
 import java.net.Socket
-
 
 class WirelessController(ip: String, port: Int) : Thread() {
 

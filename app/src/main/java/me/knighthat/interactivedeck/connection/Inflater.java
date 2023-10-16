@@ -22,7 +22,7 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.zip.GZIPInputStream;
 
-import me.knighthat.interactivedeck.console.Log;
+import me.knighthat.lib.logging.Log;
 
 public class Inflater {
 
