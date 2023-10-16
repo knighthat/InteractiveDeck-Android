@@ -2,7 +2,7 @@ package me.knighthat.interactivedeck.vars;
 
 import android.content.SharedPreferences;
 
-import me.knighthat.interactivedeck.console.Log;
+import me.knighthat.lib.logging.Log;
 
 public class Settings {
 
@@ -20,7 +20,7 @@ public class Settings {
 
         String msg = "Saved %s:%s for next login";
         msg = String.format( msg, address(), port() );
-        Log.info( msg, true );
+        Log.info( msg );
     }
 
     public static String address() {

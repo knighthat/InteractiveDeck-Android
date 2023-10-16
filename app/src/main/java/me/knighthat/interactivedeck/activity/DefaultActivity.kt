@@ -9,16 +9,19 @@ import androidx.lifecycle.ViewModelProvider
 import com.google.android.material.textfield.TextInputEditText
 import me.knighthat.interactivedeck.R
 import me.knighthat.interactivedeck.connection.wireless.WirelessController
-import me.knighthat.interactivedeck.console.Log
 import me.knighthat.interactivedeck.event.EventHandler
+import me.knighthat.interactivedeck.logging.Logger
 import me.knighthat.interactivedeck.vars.ActiveProfile
 import me.knighthat.interactivedeck.vars.Memory
 import me.knighthat.interactivedeck.vars.Settings
+import me.knighthat.lib.logging.Log
 import kotlin.system.exitProcess
 
 class DefaultActivity : AppCompatActivity() {
 
     init {
+        Log.setLogger(Logger())
+
         // Close program once user close app
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
@@ -60,7 +63,7 @@ class DefaultActivity : AppCompatActivity() {
         try {
             val port = portString.toInt()
 
-            Log.info("Sending pairing request to $ip:$port", false)
+            Log.info("Sending pairing request to $ip:$port")
 
             WirelessController(ip, port).start()
         } catch (e: NumberFormatException) {
