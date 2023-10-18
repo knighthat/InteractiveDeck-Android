@@ -8,14 +8,14 @@ import androidx.annotation.MainThread
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import me.knighthat.interactivedeck.R
-import me.knighthat.interactivedeck.component.action.PressAction
-import me.knighthat.interactivedeck.connection.request.ActionRequest
-import me.knighthat.interactivedeck.connection.wireless.WirelessController
-import me.knighthat.interactivedeck.connection.wireless.WirelessSender
 import me.knighthat.interactivedeck.event.EventHandler
 import me.knighthat.interactivedeck.task.GotoPage
 import me.knighthat.interactivedeck.task.Task
 import me.knighthat.interactivedeck.vars.Memory
+import me.knighthat.lib.connection.Connection
+import me.knighthat.lib.connection.action.Action
+import me.knighthat.lib.connection.request.ActionRequest
+import me.knighthat.lib.connection.wireless.WirelessSender
 
 class ButtonsLayout : AppCompatActivity() {
 
@@ -56,14 +56,11 @@ class ButtonsLayout : AppCompatActivity() {
                 params.rightMargin = if (button.x == it.columns() - 1) 0 else it.gap()
                 button.layoutParams = params
 
-
                 if (!button.hasOnClickListeners())
                     button.setOnClickListener {
                         if (button.task == null) {
-                            val action = PressAction(button)
-                            val request = ActionRequest(action)
-
-                            WirelessSender.send(request)
+                            val action = Action(button.uuid, Action.ActionType.PRESS)
+                            WirelessSender.send(ActionRequest(action))
                         } else
                             this.switchProfile(button.task!!)
                     }
@@ -86,11 +83,7 @@ class ButtonsLayout : AppCompatActivity() {
         val confirm = AlertDialog.Builder(this)
         confirm.setTitle("Disconnect")
         confirm.setMessage("Are you sure you disconnect from host and go back to main menu?")
-        confirm.setPositiveButton("Yes") { _, _ ->
-            if (WirelessController.SOCKET != null)
-                WirelessController.SOCKET!!.close()
-            finish()
-        }
+        confirm.setPositiveButton("Yes") { _, _ -> Connection.setStatus(Connection.Status.DISCONNECTED) }
         confirm.setNegativeButton("No") { _, _ -> }
         confirm.show()
     }
