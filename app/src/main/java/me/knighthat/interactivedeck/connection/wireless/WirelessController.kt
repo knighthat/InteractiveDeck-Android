@@ -1,101 +1,95 @@
 package me.knighthat.interactivedeck.connection.wireless
 
-import com.google.gson.JsonParseException
-import com.google.gson.JsonParser
-import kotlinx.coroutines.runBlocking
-import me.knighthat.interactivedeck.connection.request.PairRequest
-import me.knighthat.interactivedeck.connection.request.Request
-import me.knighthat.interactivedeck.connection.request.RequestHandler
+import android.os.Build
+import com.google.gson.JsonObject
+import me.knighthat.interactivedeck.connection.RequestHandler
 import me.knighthat.interactivedeck.event.EventHandler
 import me.knighthat.interactivedeck.vars.Settings
 import me.knighthat.interactivedeck.vars.Settings.BUFFER
+import me.knighthat.lib.connection.Connection
+import me.knighthat.lib.connection.request.PairRequest
+import me.knighthat.lib.connection.wireless.WirelessReceiver
+import me.knighthat.lib.connection.wireless.WirelessSender
 import me.knighthat.lib.logging.Log
-import java.io.IOException
 import java.io.InputStream
-import java.net.ConnectException
 import java.net.Socket
 
-class WirelessController(ip: String, port: Int) : Thread() {
-
-    companion object {
-        val handler = RequestHandler()
-        var SOCKET: Socket? = null
-    }
-
-    private val ip: String
+class WirelessController(
+    private val ip: String,
     private val port: Int
+) : Thread() {
 
     init {
-        this.ip = ip
-        this.port = port
+        name = "NET"
+
+        Connection.whenConnectionStatusChanged {
+            if (Connection.isConnected())
+                return@whenConnectionStatusChanged
+
+            val currentActivity = EventHandler.getCurrentActivity() ?: return@whenConnectionStatusChanged
+            currentActivity.finish()
+            EventHandler.setCurrentActivity(null)
+
+            if (Connection.getStatus() != Connection.Status.ERROR)
+                Settings.saveLastHost(ip, port)
+
+            this.interrupt()
+        }
+    }
+
+    private fun handleDisconnection(sender: WirelessSender, client: Socket) {
+        Connection.setStatus(Connection.Status.DISCONNECTED)
+
+        sender.interrupt()
+        client.close()
         name = "NET"
     }
 
+    private fun startSender(client: Socket): WirelessSender {
+        val sender = WirelessSender(client.getOutputStream())
+        sender.start()
+
+        val json = JsonObject()
+        json.addProperty("brand", Build.BRAND)
+        json.addProperty("device", Build.DEVICE)
+        json.addProperty("manufacturer", Build.MANUFACTURER)
+        json.addProperty("model", Build.MODEL)
+        json.addProperty("androidVersion", Build.VERSION.RELEASE)
+        PairRequest(json).send()
+
+        return sender
+    }
+
+    private fun initReceiver(inStream: InputStream) {
+        runCatching {
+            WirelessReceiver(
+                inStream,
+                BUFFER,
+                RequestHandler()
+            ).run()
+        }.onFailure {
+            Log.exc("Parsing request failed!", it, false)
+            Log.reportBug()
+        }
+    }
+
     override fun run() {
-        try {
-            Socket(ip, port)
-                .also { SOCKET = it }
-                .use {
-                    WirelessSender.start(it.getOutputStream())
-                    WirelessSender.send(PairRequest())
+        Socket(ip, port)
+            .runCatching {
 
-                    name = "NET/I"
-                    this.handleIncomingTraffic(it.getInputStream())
-                    name = "NET"
-                }
-            SOCKET = null
-            val currentActivity = EventHandler.getCurrentActivity() ?: return
-            Log.deb(currentActivity.javaClass.name)
-            currentActivity.finish()
-            EventHandler.setCurrentActivity(null)
-        } catch (e: IOException) {
-            //TODO Handle exception
-            e.printStackTrace()
-        } catch (e: ConnectException) {
-            //TODO Handle timeout
-            Log.warn("Connection timeout!")
-            interrupt()
-        } finally {
-            Settings.saveLastHost(ip, port)
-        }
-    }
+                Connection.setStatus(Connection.Status.CONNECTED)
 
-    private fun handleIncomingTraffic(stream: InputStream) {
-        var bytesRead: Int
-        var finalStr = ""
-        while (stream.read(BUFFER).also { bytesRead = it } != -1) {
-            val decoded = String(BUFFER, 0, bytesRead)
-            val sliced = decoded.split("\u0000")
-            Log.deb(sliced.toString())
+                val sender = startSender(this)
+                initReceiver(getInputStream())
+                handleDisconnection(sender, this)
 
-            if (sliced.size > 1)
-                for ((i, v) in sliced.withIndex())
-                    when (i) {
-                        0 -> {
-                            finalStr = finalStr.plus(v)
-                            process(finalStr)
-                        }
+                close()
 
-                        sliced.size - 1 -> finalStr = v
+            }.onFailure {
 
-                        else -> process(v)
-                    }
-            else
-                finalStr = finalStr.plus(decoded)
-        }
-    }
+                Connection.setStatus(Connection.Status.ERROR)
+                Log.exc("Connection error!", it, false)
 
-    private fun process(payload: String) {
-        Log.deb("Processing: $payload")
-        runBlocking {
-            try {
-                val json = JsonParser.parseString(payload).asJsonObject
-                val request = Request.fromJson(json)
-                handler.process(request)
-            } catch (e: JsonParseException) {
-                Log.err("Error occurs while parsing request", false)
-                Log.err("Caused by: ${e.message}", false)
             }
-        }
     }
 }
