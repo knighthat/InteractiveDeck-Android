@@ -8,63 +8,31 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package me.knighthat.interactivedeck.connection.request
+package me.knighthat.interactivedeck.connection
 
 import android.content.Intent
-import com.google.gson.JsonArray
 import me.knighthat.interactivedeck.activity.ButtonsLayout
-import me.knighthat.interactivedeck.connection.Inflater
 import me.knighthat.interactivedeck.event.EventHandler
 import me.knighthat.interactivedeck.file.Profile
 import me.knighthat.interactivedeck.vars.Memory
-import me.knighthat.lib.logging.Log
+import me.knighthat.lib.connection.request.AbstractRequestHandler
+import me.knighthat.lib.connection.request.AddRequest
+import me.knighthat.lib.connection.request.RemoveRequest
+import me.knighthat.lib.connection.request.Request
+import me.knighthat.lib.connection.request.TargetedRequest
+import me.knighthat.lib.connection.request.UpdateRequest
 import java.util.UUID
 
-class RequestHandler {
-    fun process(request: Request) {
-        val content = request.content
-        val type = request.type
+class RequestHandler : AbstractRequestHandler() {
 
-        if (request !is TargetedRequest && type != Request.RequestType.PAIR) {
-            Log.err("Invalid request format!", false)
-            Log.err(request.toString(), false)
-            return
-        }
+    override fun handleActionRequest(request: Request) {}
 
-        when (type) {
-            Request.RequestType.ADD ->
-                add(
-                    (request as TargetedRequest).uuid,
-                    Inflater.inflate(content.asJsonArray)
-                )
+    override fun handleAddRequest(request: AddRequest) {
+        val uuid = request.uuid
+        val payload = request.payload.asJsonArray
 
-            Request.RequestType.REMOVE ->
-                remove(
-                    (request as TargetedRequest).uuid,
-                    content.asJsonArray
-                )
-
-            Request.RequestType.UPDATE -> update(request)
-            Request.RequestType.PAIR -> pair(content.asJsonArray)
-            else -> {}
-        }
-    }
-
-    private fun pair(content: JsonArray) {
-        val ids = JsonArray()
-        content.forEach { ids.add(it.asString) }
-
-        Request(Request.RequestType.ADD, ids).send()
-
-        EventHandler.post {
-            val intent = Intent(EventHandler.DEF_ACTIVITY, ButtonsLayout::class.java)
-            EventHandler.DEF_ACTIVITY.startActivity(intent)
-        }
-    }
-
-    private fun add(uuid: UUID?, content: JsonArray) {
         if (uuid == null)
-            content.forEach {
+            payload.forEach {
                 val json = it.asJsonObject
                 val profile = Profile.fromJson(json)
                 Memory.add(profile)
@@ -72,12 +40,26 @@ class RequestHandler {
         else
             Memory
                 .getProfile(uuid)
-                .ifPresent { it.addButtons(content) }
+                .ifPresent { it.addButtons(payload) }
     }
 
-    private fun remove(uuid: UUID?, content: JsonArray) {
+    override fun handlePairRequest(request: Request) {
+        AddRequest {
+            it.addAll(request.payload.asJsonArray)
+        }.send()
+
+        EventHandler.post {
+            val intent = Intent(EventHandler.DEF_ACTIVITY, ButtonsLayout::class.java)
+            EventHandler.DEF_ACTIVITY.startActivity(intent)
+        }
+    }
+
+    override fun handleRemoveRequest(request: RemoveRequest) {
+        val uuid = request.uuid
+        val payload = request.payload.asJsonArray
+
         if (uuid == null)
-            for (it in content) {
+            for (it in payload) {
                 val idStr = it.asString
                 Memory
                     .getProfile(UUID.fromString(idStr))
@@ -86,18 +68,17 @@ class RequestHandler {
         else
             Memory
                 .getProfile(uuid)
-                .ifPresent { it.removeButtons(content) }
+                .ifPresent { it.removeButtons(payload) }
     }
 
-    private fun update(request: Request) {
-        val uuid = (request as TargetedRequest).uuid ?: return
-        val target = request.target
+    override fun handleUpdateRequest(request: UpdateRequest) {
+        val uuid = request.uuid ?: return
 
-        when (target) {
+        when (request.target) {
             TargetedRequest.Target.BUTTON -> Memory.getButton(uuid)
             TargetedRequest.Target.PROFILE -> Memory.getProfile(uuid)
         }.ifPresent {
-            it.update(request.content.asJsonObject)
+            it.update(request.payload.asJsonObject)
         }
     }
 }
