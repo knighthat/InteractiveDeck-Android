@@ -1,6 +1,5 @@
 package me.knighthat.interactivedeck.activity
 
-import android.content.Context
 import android.os.Bundle
 import android.widget.Button
 import androidx.activity.OnBackPressedCallback
@@ -19,9 +18,15 @@ import kotlin.system.exitProcess
 
 class DefaultActivity : AppCompatActivity() {
 
-    init {
+    private fun init() {
         Log.setLogger(Logger())
 
+        EventHandler.DEF_ACTIVITY = this
+        Memory.activeProfile = ViewModelProvider(this)[ActiveProfile::class.java]
+        Settings.PREFERENCES = getSharedPreferences("AppSettings", MODE_PRIVATE)
+    }
+
+    private fun addEvents() {
         // Close program once user close app
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
@@ -31,44 +36,50 @@ class DefaultActivity : AppCompatActivity() {
         })
     }
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        EventHandler.DEF_ACTIVITY = this
-        Memory.activeProfile = ViewModelProvider(this)[ActiveProfile::class.java]
-        Settings.PREFERENCES = getSharedPreferences("AppSettings", Context.MODE_PRIVATE)
+    private fun connectTo(ipInput: TextInputEditText, portInput: TextInputEditText) {
+        val address = ipInput.text
+        val port = portInput.text
 
+        if (address.isNullOrBlank()) {
+            Log.warn("Missing IP Address!")
+            return
+        }
+
+        if (port.isNullOrBlank()) {
+            Log.warn("Missing Port!")
+            return
+        }
+
+        Log.info("Sending pairing request to $address:$port")
+
+        runCatching {
+
+            WirelessController(
+                address.toString(),
+                port.toString().toInt()
+            ).start()
+
+        }.onFailure {
+            Log.warn("Port must be a number between 1 and 65535")
+        }
+    }
+
+    override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        init()
+        addEvents()
+
         setContentView(R.layout.activity_default)
 
         val ipInput: TextInputEditText = findViewById(R.id.ipInput)
         val portInput: TextInputEditText = findViewById(R.id.portInput)
 
-        loadLastSettings(ipInput, portInput)
+        // Load last settings
+        ipInput.setText(Settings.address())
+        portInput.setText(Settings.port())
 
         findViewById<Button>(R.id.connectBtn).setOnClickListener {
-            if (ipInput.text == null || portInput.text == null) return@setOnClickListener
-            this.attempt2Connect(ipInput.text.toString(), portInput.text.toString())
-        }
-    }
-
-    private fun loadLastSettings(ipInput: TextInputEditText, portInput: TextInputEditText) {
-        val address = Settings.address()
-        ipInput.setText(address)
-        Log.deb(address)
-
-        val port = Settings.port()
-        portInput.setText(port)
-    }
-
-    private fun attempt2Connect(ip: String, portString: String) {
-        try {
-            val port = portString.toInt()
-
-            Log.info("Sending pairing request to $ip:$port")
-
-            WirelessController(ip, port).start()
-        } catch (e: NumberFormatException) {
-            val warn = "Port must be a number between 1 and 65535"
-            Log.warn(warn)
+            connectTo(ipInput, portInput)
         }
     }
 }
