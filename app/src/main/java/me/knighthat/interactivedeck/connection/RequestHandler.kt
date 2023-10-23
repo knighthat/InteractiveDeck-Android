@@ -16,6 +16,7 @@ import me.knighthat.interactivedeck.event.EventHandler
 import me.knighthat.interactivedeck.file.Profile
 import me.knighthat.interactivedeck.vars.Memory
 import me.knighthat.lib.connection.request.AbstractRequestHandler
+import me.knighthat.lib.connection.request.ActionRequest
 import me.knighthat.lib.connection.request.AddRequest
 import me.knighthat.lib.connection.request.RemoveRequest
 import me.knighthat.lib.connection.request.Request
@@ -25,7 +26,7 @@ import java.util.UUID
 
 class RequestHandler : AbstractRequestHandler() {
 
-    override fun handleActionRequest(request: Request) {}
+    override fun handleActionRequest(request: ActionRequest) {}
 
     override fun handleAddRequest(request: AddRequest) {
         val uuid = request.uuid
@@ -74,11 +75,13 @@ class RequestHandler : AbstractRequestHandler() {
     override fun handleUpdateRequest(request: UpdateRequest) {
         val uuid = request.uuid ?: return
 
-        when (request.target) {
-            TargetedRequest.Target.BUTTON -> Memory.getButton(uuid)
-            TargetedRequest.Target.PROFILE -> Memory.getProfile(uuid)
-        }.ifPresent {
-            it.update(request.payload.asJsonObject)
-        }
+        if (request.target == TargetedRequest.Target.BUTTON)
+            Memory.getButton(uuid).ifPresent {
+                it.update(request.payload.asJsonObject)
+            }
+        else
+            Memory.getProfile(uuid).ifPresent {
+                it.update(request.payload.asJsonObject)
+            }
     }
 }
