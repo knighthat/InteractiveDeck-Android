@@ -1,5 +1,6 @@
 package me.knighthat.interactivedeck.component.ibutton
 
+import android.annotation.SuppressLint
 import android.graphics.Typeface
 import android.graphics.drawable.GradientDrawable
 import android.graphics.drawable.LayerDrawable
@@ -8,32 +9,36 @@ import android.graphics.drawable.shapes.RectShape
 import androidx.annotation.MainThread
 import androidx.appcompat.widget.AppCompatButton
 import com.google.gson.JsonObject
-import me.knighthat.interactivedeck.component.LiveProperty
 import me.knighthat.interactivedeck.event.EventHandler
 import me.knighthat.interactivedeck.task.GotoPage
 import me.knighthat.interactivedeck.task.Task
 import me.knighthat.interactivedeck.utils.ColorUtils
+import me.knighthat.lib.component.ibutton.InteractiveButton
+import me.knighthat.lib.connection.request.TargetedRequest
+import me.knighthat.lib.memory.Persistent
 import java.util.UUID
 
 
-data class IButton(
-    val uuid: UUID,
-    val x: Int,
-    val y: Int,
+@SuppressLint("ViewConstructor")
+class IButton(
+    override val uuid: UUID,
+    override val profile: UUID,
+    override val posX: Int,
+    override val posY: Int,
     var task: Task?
-) : AppCompatButton(EventHandler.DEF_ACTIVITY), LiveProperty {
+) : AppCompatButton(EventHandler.DEF_ACTIVITY), InteractiveButton {
 
     private var backgroundColor = 0
     private var borderColor = 0
 
     companion object {
-        fun fromJson(json: JsonObject): IButton {
+        fun fromJson(profile: UUID, json: JsonObject): IButton {
             val uuidStr = json["uuid"].asString
             val uuid = UUID.fromString(uuidStr)
             val x = json.getAsJsonPrimitive("x").asInt
             val y = json.getAsJsonPrimitive("y").asInt
 
-            val button = IButton(uuid, x, y, null)
+            val button = IButton(uuid, profile, x, y, null)
             button.update(json)
 
             return button
@@ -41,7 +46,7 @@ data class IButton(
     }
     
     @MainThread
-    override fun update0(json: JsonObject) {
+    private fun update0(json: JsonObject) {
         if (json.has("icon"))
             update0(json["icon"].asJsonObject)
 
@@ -122,4 +127,9 @@ data class IButton(
         val uuid = UUID.fromString(goto)
         this.task = GotoPage(uuid)
     }
+
+    override val target: TargetedRequest.Target = TargetedRequest.Target.BUTTON
+    override fun remove() = Persistent.remove(this)
+
+    override fun update(json: JsonObject) = EventHandler.post { update0(json) }
 }

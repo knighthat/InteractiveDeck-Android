@@ -92,7 +92,7 @@ data class Profile(
     fun addButtons(array: JsonArray) {
         array.forEach {
             val json = it.asJsonObject
-            val button = IButton.fromJson(json)
+            val button = IButton.fromJson(uuid, json)
 
             buttons().add(button)
             Memory.add(button)

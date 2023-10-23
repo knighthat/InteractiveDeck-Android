@@ -48,12 +48,12 @@ class ButtonsLayout : AppCompatActivity() {
 
             for (button in it.buttons()) {
                 val params = GridLayout.LayoutParams()
-                params.rowSpec = GridLayout.spec(button.y, 1, 1f)
-                params.columnSpec = GridLayout.spec(button.x, 1, 1f)
-                params.topMargin = if (button.y == 0) 0 else it.gap()
-                params.bottomMargin = if (button.y == it.rows() - 1) 0 else it.gap()
-                params.leftMargin = if (button.x == 0) 0 else it.gap()
-                params.rightMargin = if (button.x == it.columns() - 1) 0 else it.gap()
+                params.rowSpec = GridLayout.spec(button.posY, 1, 1f)
+                params.columnSpec = GridLayout.spec(button.posX, 1, 1f)
+                params.topMargin = if (button.posY == 0) 0 else it.gap()
+                params.bottomMargin = if (button.posY == it.rows() - 1) 0 else it.gap()
+                params.leftMargin = if (button.posX == 0) 0 else it.gap()
+                params.rightMargin = if (button.posX == it.columns() - 1) 0 else it.gap()
                 button.layoutParams = params
 
                 if (!button.hasOnClickListeners())
