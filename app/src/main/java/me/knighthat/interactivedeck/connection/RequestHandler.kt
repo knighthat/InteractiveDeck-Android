@@ -75,13 +75,9 @@ class RequestHandler : AbstractRequestHandler() {
     override fun handleUpdateRequest(request: UpdateRequest) {
         val uuid = request.uuid ?: return
 
-        if (request.target == TargetedRequest.Target.BUTTON)
-            Memory.getButton(uuid).ifPresent {
-                it.update(request.payload.asJsonObject)
-            }
-        else
-            Memory.getProfile(uuid).ifPresent {
-                it.update(request.payload.asJsonObject)
-            }
+        when (request.target) {
+            TargetedRequest.Target.BUTTON -> Memory.getButton(uuid)
+            TargetedRequest.Target.PROFILE -> Memory.getProfile(uuid)
+        }.ifPresent { it.update(request.payload.asJsonObject) }
     }
 }
