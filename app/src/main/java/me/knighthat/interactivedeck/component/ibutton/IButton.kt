@@ -13,9 +13,9 @@ import me.knighthat.interactivedeck.event.EventHandler
 import me.knighthat.interactivedeck.task.GotoPage
 import me.knighthat.interactivedeck.task.Task
 import me.knighthat.interactivedeck.utils.ColorUtils
+import me.knighthat.interactivedeck.vars.Memory
 import me.knighthat.lib.component.ibutton.InteractiveButton
 import me.knighthat.lib.connection.request.TargetedRequest
-import me.knighthat.lib.memory.Persistent
 import java.util.UUID
 
 
@@ -44,9 +44,21 @@ class IButton(
             return button
         }
     }
-    
+
     @MainThread
     private fun update0(json: JsonObject) {
+        for (entry in json.entrySet())
+            when (entry.key) {
+                "icon", "label" -> update0(entry.value.asJsonObject)
+                "background" -> backgroundColor = ColorUtils.parseJson(entry.value)
+                "foreground" -> setTextColor(ColorUtils.parseJson(entry.value))
+                "border" -> borderColor = ColorUtils.parseJson(entry.value)
+                "font" -> font(entry.value.asJsonObject)
+                "text" -> text = entry.value.asString
+                "task" -> task(entry.value.asJsonObject)
+            }
+
+
         if (json.has("icon"))
             update0(json["icon"].asJsonObject)
 
@@ -119,7 +131,10 @@ class IButton(
         return ColorUtils.parseJson(array)
     }
 
-    private fun task(task: JsonObject) {
+    private fun task(task: JsonObject?) {
+        this.task = null
+        if (task == null) return
+
         val type = task["action_type"].asString
         if (!type.equals("SWITCH_PROFILE"))
             return
@@ -129,7 +144,7 @@ class IButton(
     }
 
     override val target: TargetedRequest.Target = TargetedRequest.Target.BUTTON
-    override fun remove() = Persistent.remove(this)
+    override fun remove() = Memory.remove(this)
 
     override fun update(json: JsonObject) = EventHandler.post { update0(json) }
 }
