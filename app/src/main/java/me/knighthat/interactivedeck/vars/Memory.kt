@@ -56,7 +56,7 @@ class Memory {
         @Synchronized
         fun add(profile: Profile) {
             profiles().add(profile)
-            profile.buttons().forEach(Memory::add)
+            profile.buttons.forEach(Memory::add)
             if (profile.isDefault) {
                 _default = profile
                 active = profile
@@ -64,10 +64,10 @@ class Memory {
         }
 
         @Synchronized
-        fun remove(profile: Profile): Boolean {
+        fun remove(profile: Profile) {
             if (active == profile)
                 active = _default
-            return profiles().remove(profile)
+            profiles().remove(profile)
         }
 
         private val buttons = ArrayList<IButton>()
@@ -77,20 +77,17 @@ class Memory {
 
         @Synchronized
         fun getButton(uuid: UUID): Optional<IButton> {
-            var button: IButton? = null
-            for (b in buttons())
-                if (uuid == b.uuid) {
-                    button = b
-                    break
-                }
-            return Optional.ofNullable(button)
+            val matched = _default.buttons.filter { uuid == it.uuid }
+            return Optional.ofNullable(matched.firstOrNull())
         }
 
         @Synchronized
         fun add(button: IButton) = buttons().add(button)
 
         @Synchronized
-        fun remove(button: IButton): Boolean = buttons().remove(button)
+        fun remove(button: IButton) {
+            buttons().remove(button)
+        }
     }
 }
 
