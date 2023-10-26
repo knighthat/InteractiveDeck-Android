@@ -28,8 +28,16 @@ class IButton(
     var task: Task?
 ) : AppCompatButton(EventHandler.DEF_ACTIVITY), InteractiveButton {
 
-    private var backgroundColor = 0
-    private var borderColor = 0
+    private var fill: Int = 0
+        set(value) {
+            field = value
+            repaint()
+        }
+    private var border = 0
+        set(value) {
+            field = value
+            repaint()
+        }
 
     companion object {
         fun fromJson(profile: UUID, json: JsonObject): IButton {
@@ -50,47 +58,13 @@ class IButton(
         for (entry in json.entrySet())
             when (entry.key) {
                 "icon", "label" -> update0(entry.value.asJsonObject)
-                "background" -> backgroundColor = ColorUtils.parseJson(entry.value)
+                "background" -> fill = ColorUtils.parseJson(entry.value)
                 "foreground" -> setTextColor(ColorUtils.parseJson(entry.value))
-                "border" -> borderColor = ColorUtils.parseJson(entry.value)
+                "border" -> border = ColorUtils.parseJson(entry.value)
                 "font" -> font(entry.value.asJsonObject)
                 "text" -> text = entry.value.asString
                 "task" -> task(entry.value.asJsonObject)
             }
-
-
-        if (json.has("icon"))
-            update0(json["icon"].asJsonObject)
-
-        if (json.has("label"))
-            update0(json["label"].asJsonObject)
-
-        if (json.has("background")) {
-            this.backgroundColor = fromJson(json, "background")
-            repaint()
-        }
-
-        if (json.has("border")) {
-            this.borderColor = fromJson(json, "border")
-            repaint()
-        }
-
-        if (json.has("foreground")) {
-            val color = fromJson(json, "foreground")
-            setTextColor(color)
-        }
-
-        if (json.has("font"))
-            font(json["font"].asJsonObject)
-
-        if (json.has("text"))
-            text = json["text"].asString
-
-        if (json.has("task")) {
-            this.task = null
-            if (!json["task"].isJsonNull)
-                task(json["task"].asJsonObject)
-        }
     }
 
     private fun font(json: JsonObject) {
@@ -112,23 +86,18 @@ class IButton(
     }
 
     private fun repaint() {
-        if (borderColor == 0)
-            borderColor = backgroundColor
+        if (border == 0)
+            border = fill
 
         val background = ShapeDrawable(RectShape())
-        background.paint.color = backgroundColor
+        background.paint.color = fill
 
         val border = GradientDrawable()
         border.shape = GradientDrawable.RECTANGLE
-        border.setStroke(3, borderColor)
+        border.setStroke(3, this.border)
 
         val drawable = LayerDrawable(arrayOf(background, border))
         this.background = drawable
-    }
-
-    private fun fromJson(json: JsonObject, property: String): Int {
-        val array = json[property].asJsonArray
-        return ColorUtils.parseJson(array)
     }
 
     private fun task(task: JsonObject?) {
