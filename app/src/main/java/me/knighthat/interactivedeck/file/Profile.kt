@@ -12,23 +12,30 @@ package me.knighthat.interactivedeck.file
 
 import androidx.annotation.MainThread
 import com.google.gson.JsonArray
+import com.google.gson.JsonElement
 import com.google.gson.JsonObject
-import me.knighthat.interactivedeck.component.LiveProperty
 import me.knighthat.interactivedeck.component.ibutton.IButton
+import me.knighthat.interactivedeck.event.EventHandler
 import me.knighthat.interactivedeck.vars.Memory
+import me.knighthat.lib.exception.ProfileFormatException
+import me.knighthat.lib.json.JsonArrayConverter
+import me.knighthat.lib.profile.AbstractProfile
 import java.util.UUID
 
-data class Profile(
-    val uuid: UUID,
-    var displayName: String,
-    val isDefault: Boolean,
-    private val buttons: MutableList<IButton>,
-    private var columns: Int,
-    private var rows: Int,
-    private var gap: Int
-) : LiveProperty {
+class Profile(
+    override val uuid: UUID,
+    displayName: String,
+    isDefault: Boolean
+) : AbstractProfile<IButton>(isDefault, ArrayList(), displayName, 4, 2, 3) {
+
     companion object {
+        @Throws(ProfileFormatException::class)
         fun fromJson(json: JsonObject): Profile {
+            if (!json.has("uuid"))
+                throw ProfileFormatException("Missing UUID!")
+            if (!json.has("default"))
+                throw ProfileFormatException("Cannot decide whether profile is default!")
+
             val idStr = json["uuid"].asString
             val isDefault = json["default"].asBoolean
 
@@ -36,10 +43,6 @@ data class Profile(
                 UUID.fromString(idStr),
                 "",
                 isDefault,
-                ArrayList(),
-                1,
-                1,
-                0,
             )
             profile.update(json)
 
@@ -47,14 +50,31 @@ data class Profile(
         }
     }
 
-    fun columns(): Int = this.columns
+    fun addButtons(array: JsonArray) {
+        array.forEach {
+            val button = IButton.fromJson(uuid, it.asJsonObject)
 
-    fun rows(): Int = this.rows
+            buttons.add(button)
+            Memory.add(button)
+        }
+    }
 
-    fun gap(): Int = this.gap
+    fun removeButtons(array: JsonArray) {
+        JsonArrayConverter
+            .toStringArray(array)
+            .forEach { uuidStr ->
+                val uuid = UUID.fromString(uuidStr)
+                if (buttons.removeIf { it.uuid == uuid })
+                    Memory.getButton(uuid).ifPresent(IButton::remove)
+            }
+    }
 
-    @Synchronized
-    fun buttons() = this.buttons
+    override fun remove() = Memory.remove(this)
+
+    override fun updateButtons(buttonJson: JsonElement) {
+        if (buttonJson.isJsonArray)
+            addButtons(buttonJson.asJsonArray)
+    }
 
     /*
      * There is a limit of how many buttons can be displayed at once
@@ -69,49 +89,12 @@ data class Profile(
      * If the number exceed, only first column or row will be showed
      */
     @MainThread
-    override fun update0(json: JsonObject) {
-        if (json.has("displayName"))
-            this.displayName = json["displayName"].asString
-
-        if (json.has("columns"))
-            this.columns = json["columns"].asInt
-
-        if (json.has("rows"))
-            this.rows = json["rows"].asInt
-
-        if (json.has("gap"))
-            this.gap = json["gap"].asInt
-
-        if (json.has("buttons"))
-            addButtons(json["buttons"].asJsonArray)
-
-        if (Memory.active == this)
-            Memory.active = this
-    }
-
-    fun addButtons(array: JsonArray) {
-        array.forEach {
-            val json = it.asJsonObject
-            val button = IButton.fromJson(uuid, json)
-
-            buttons().add(button)
-            Memory.add(button)
-        }
-    }
-
-    fun removeButtons(array: JsonArray) {
-        val toBeDeleted = ArrayList<UUID>()
-        array.forEach {
-            val uuid = UUID.fromString(it.asString)
-            toBeDeleted.add(uuid)
-        }
-        val buttons = buttons().iterator()
-        while (buttons.hasNext()) {
-            val button = buttons.next()
-            if (!toBeDeleted.contains(button.uuid))
-                continue
-            buttons.remove()
-            Memory.remove(button)
+    override fun update(json: JsonObject) {
+        EventHandler.post {
+            super.update(json)
+            // Reload display panel
+            if (Memory.active == this)
+                Memory.active = this
         }
     }
 }
