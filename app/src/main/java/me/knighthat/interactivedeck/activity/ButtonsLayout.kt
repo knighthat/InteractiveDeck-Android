@@ -43,26 +43,27 @@ class ButtonsLayout : AppCompatActivity() {
         Memory.aLive.observe(this) {
             layout.removeAllViews()
 
-            layout.columnCount = it.columns()
-            layout.rowCount = it.rows()
+            layout.columnCount = it.columns
+            layout.rowCount = it.rows
 
-            for (button in it.buttons()) {
+            for (button in it.buttons) {
                 val params = GridLayout.LayoutParams()
                 params.rowSpec = GridLayout.spec(button.posY, 1, 1f)
                 params.columnSpec = GridLayout.spec(button.posX, 1, 1f)
-                params.topMargin = if (button.posY == 0) 0 else it.gap()
-                params.bottomMargin = if (button.posY == it.rows() - 1) 0 else it.gap()
-                params.leftMargin = if (button.posX == 0) 0 else it.gap()
-                params.rightMargin = if (button.posX == it.columns() - 1) 0 else it.gap()
+                params.topMargin = if (button.posY == 0) 0 else it.gap
+                params.bottomMargin = if (button.posY == it.rows - 1) 0 else it.gap
+                params.leftMargin = if (button.posX == 0) 0 else it.gap
+                params.rightMargin = if (button.posX == it.columns - 1) 0 else it.gap
                 button.layoutParams = params
 
                 if (!button.hasOnClickListeners())
                     button.setOnClickListener {
-                        if (button.task == null) {
+                        if (button.task is GotoPage) {
+                            switchProfile(button.task!!)
+                        } else {
                             val action = Action(button.uuid, Action.ActionType.PRESS)
                             WirelessSender.send(ActionRequest(action))
-                        } else
-                            this.switchProfile(button.task!!)
+                        }
                     }
                 layout.addView(button)
             }
