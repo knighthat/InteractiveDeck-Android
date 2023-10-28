@@ -4,14 +4,11 @@ import android.os.Bundle
 import android.widget.Button
 import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.AppCompatActivity
-import androidx.lifecycle.ViewModelProvider
 import com.google.android.material.textfield.TextInputEditText
 import me.knighthat.interactivedeck.R
 import me.knighthat.interactivedeck.connection.wireless.WirelessController
 import me.knighthat.interactivedeck.event.EventHandler
 import me.knighthat.interactivedeck.logging.Logger
-import me.knighthat.interactivedeck.vars.ActiveProfile
-import me.knighthat.interactivedeck.vars.Memory
 import me.knighthat.interactivedeck.vars.Settings
 import me.knighthat.lib.logging.Log
 import kotlin.system.exitProcess
@@ -22,7 +19,6 @@ class DefaultActivity : AppCompatActivity() {
         Log.setLogger(Logger())
 
         EventHandler.DEF_ACTIVITY = this
-        Memory.activeProfile = ViewModelProvider(this)[ActiveProfile::class.java]
         Settings.PREFERENCES = getSharedPreferences("AppSettings", MODE_PRIVATE)
     }
 
