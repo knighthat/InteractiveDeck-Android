@@ -34,11 +34,7 @@ class ButtonsLayout : AppCompatActivity() {
 
         startObservation()
 
-        onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
-            override fun handleOnBackPressed() {
-                handleBackPress()
-            }
-        })
+        handleBackPress()
 
         Persistent.setActive(Persistent.getDefaultProfile())
     }
@@ -92,12 +88,18 @@ class ButtonsLayout : AppCompatActivity() {
 
     @MainThread
     private fun handleBackPress() {
-        val confirm = AlertDialog.Builder(this)
-        confirm.setTitle("Disconnect")
-        confirm.setMessage("Are you sure you disconnect from host and go back to main menu?")
-        confirm.setPositiveButton("Yes") { _, _ -> Connection.setStatus(Connection.Status.DISCONNECTED) }
-        confirm.setNegativeButton("No") { _, _ -> }
-        confirm.show()
+        onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+
+                val confirm = AlertDialog.Builder(this@ButtonsLayout)
+                confirm.setTitle("Disconnect?")
+                confirm.setMessage("Are you sure you want to disconnect from host and go back to main menu?")
+                confirm.setPositiveButton("Yes") { _, _ -> Connection.setStatus(Connection.Status.DISCONNECTED) }
+                confirm.setNegativeButton("No") { _, _ -> }
+                confirm.show()
+
+            }
+        })
     }
 
     override fun onStop() {
