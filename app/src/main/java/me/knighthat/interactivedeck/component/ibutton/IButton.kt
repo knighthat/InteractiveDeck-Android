@@ -10,10 +10,10 @@ import androidx.annotation.MainThread
 import androidx.appcompat.widget.AppCompatButton
 import com.google.gson.JsonObject
 import me.knighthat.interactivedeck.event.EventHandler
+import me.knighthat.interactivedeck.persistent.Persistent
 import me.knighthat.interactivedeck.task.GotoPage
 import me.knighthat.interactivedeck.task.Task
 import me.knighthat.interactivedeck.utils.ColorUtils
-import me.knighthat.interactivedeck.vars.Memory
 import me.knighthat.lib.component.ibutton.InteractiveButton
 import me.knighthat.lib.connection.request.TargetedRequest
 import java.util.UUID
@@ -27,17 +27,6 @@ class IButton(
     override val posY: Int,
     var task: Task?
 ) : AppCompatButton(EventHandler.DEF_ACTIVITY), InteractiveButton {
-
-    private var fill: Int = 0
-        set(value) {
-            field = value
-            repaint()
-        }
-    private var border = 0
-        set(value) {
-            field = value
-            repaint()
-        }
 
     companion object {
         fun fromJson(profile: UUID, json: JsonObject): IButton {
@@ -53,31 +42,33 @@ class IButton(
         }
     }
 
-    @MainThread
-    private fun update0(json: JsonObject) {
-        for (entry in json.entrySet())
-            when (entry.key) {
-                "icon", "label" -> update0(entry.value.asJsonObject)
-                "background" -> fill = ColorUtils.parseJson(entry.value)
-                "foreground" -> setTextColor(ColorUtils.parseJson(entry.value))
-                "border" -> border = ColorUtils.parseJson(entry.value)
-                "font" -> font(entry.value.asJsonObject)
-                "text" -> text = entry.value.asString
-                "task" -> task(entry.value.asJsonObject)
-            }
-    }
+    private var fill: Int = 0
+        set(value) {
+            logAndSendUpdate("background", fill, value)
+
+            field = value
+            repaint()
+        }
+    private var border = 0
+        set(value) {
+            logAndSendUpdate("border", border, value)
+
+            field = value
+            repaint()
+        }
 
     private fun font(json: JsonObject) {
-//        if (json.has("name"))
-//            return
+        //        if (json.has("name"))
+        //            return
 
         if (json.has("weight")) {
-            val weight = when (json["weight"].asString) {
-                "bold" -> Typeface.BOLD
-                "italic" -> Typeface.ITALIC
-                "bold|italic" -> Typeface.BOLD_ITALIC
-                else -> Typeface.NORMAL
-            }
+            val weight =
+                    when (json["weight"].asString) {
+                        "bold"        -> Typeface.BOLD
+                        "italic"      -> Typeface.ITALIC
+                        "bold|italic" -> Typeface.BOLD_ITALIC
+                        else          -> Typeface.NORMAL
+                    }
             setTypeface(null, weight)
         }
 
@@ -113,7 +104,7 @@ class IButton(
     }
 
     override val target: TargetedRequest.Target = TargetedRequest.Target.BUTTON
-    override fun remove() = Memory.remove(this)
+    override fun remove() = Persistent.remove(this)
 
     override fun update(json: JsonObject) = EventHandler.post { update0(json) }
 }

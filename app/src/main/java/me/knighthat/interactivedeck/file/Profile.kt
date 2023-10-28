@@ -16,9 +16,9 @@ import com.google.gson.JsonElement
 import com.google.gson.JsonObject
 import me.knighthat.interactivedeck.component.ibutton.IButton
 import me.knighthat.interactivedeck.event.EventHandler
-import me.knighthat.interactivedeck.vars.Memory
+import me.knighthat.interactivedeck.persistent.Persistent
 import me.knighthat.lib.exception.ProfileFormatException
-import me.knighthat.lib.json.JsonArrayConverter
+import me.knighthat.lib.logging.Log
 import me.knighthat.lib.profile.AbstractProfile
 import java.util.UUID
 
@@ -50,26 +50,43 @@ class Profile(
         }
     }
 
+    override var displayName: String
+        get() = super.displayName
+        set(value) = logAndSendUpdate("displayName", displayName, value)
+
+    override var rows: Int
+        get() = super.rows
+        set(value) = logAndSendUpdate("rows", rows, value)
+
+    override var columns: Int
+        get() = super.columns
+        set(value) = logAndSendUpdate("columns", columns, value)
+
+    override var gap: Int
+        get() = super.gap
+        set(value) = logAndSendUpdate("gap", gap, value)
+
+    init {
+        val profileType = if (isDefault) "default profile" else "profile"
+        Log.deb("Created $profileType \"$displayName\" ($uuid)")
+    }
+
     fun addButtons(array: JsonArray) {
         array.forEach {
             val button = IButton.fromJson(uuid, it.asJsonObject)
 
             buttons.add(button)
-            Memory.add(button)
+            Persistent.add(button)
         }
     }
 
-    fun removeButtons(array: JsonArray) {
-        JsonArrayConverter
-            .toStringArray(array)
-            .forEach { uuidStr ->
-                val uuid = UUID.fromString(uuidStr)
-                if (buttons.removeIf { it.uuid == uuid })
-                    Memory.getButton(uuid).ifPresent(IButton::remove)
-            }
+    override fun remove() {
+        Persistent.getActive().ifPresent {
+            if (this == it)
+                Persistent.setActive(Persistent.getDefaultProfile())
+        }
+        Persistent.remove(this)
     }
-
-    override fun remove() = Memory.remove(this)
 
     override fun updateButtons(buttonJson: JsonElement) {
         if (buttonJson.isJsonArray)
@@ -93,8 +110,10 @@ class Profile(
         EventHandler.post {
             super.update(json)
             // Reload display panel
-            if (Memory.active == this)
-                Memory.active = this
+            Persistent.getActive().ifPresent {
+                if (this == it)
+                    Persistent.setActive(this)
+            }
         }
     }
 }

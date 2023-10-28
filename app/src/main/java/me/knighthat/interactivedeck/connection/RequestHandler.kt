@@ -11,10 +11,12 @@
 package me.knighthat.interactivedeck.connection
 
 import android.content.Intent
+import com.google.gson.JsonElement
 import me.knighthat.interactivedeck.activity.ButtonsLayout
 import me.knighthat.interactivedeck.event.EventHandler
 import me.knighthat.interactivedeck.file.Profile
-import me.knighthat.interactivedeck.vars.Memory
+import me.knighthat.interactivedeck.persistent.Persistent
+import me.knighthat.lib.component.Removable
 import me.knighthat.lib.connection.request.AbstractRequestHandler
 import me.knighthat.lib.connection.request.ActionRequest
 import me.knighthat.lib.connection.request.AddRequest
@@ -29,19 +31,18 @@ class RequestHandler : AbstractRequestHandler() {
     override fun handleActionRequest(request: ActionRequest) {}
 
     override fun handleAddRequest(request: AddRequest) {
-        val uuid = request.uuid
-        val payload = request.payload.asJsonArray
+        val array = request.payload.asJsonArray
 
-        if (uuid == null)
-            payload.forEach {
-                val json = it.asJsonObject
-                val profile = Profile.fromJson(json)
-                Memory.add(profile)
+        if (request.target == TargetedRequest.Target.BUTTON) {
+            val uuid = request.uuid ?: return
+            Persistent.findProfile(uuid).ifPresent { it.addButtons(array) }
+        } else
+            array.map(JsonElement::getAsJsonObject).forEach {
+                val profile = Profile.fromJson(it)
+                Persistent.add(profile)
+                if (profile.isDefault)
+                    Persistent.setDefaultProfile(profile)
             }
-        else
-            Memory
-                .getProfile(uuid)
-                .ifPresent { it.addButtons(payload) }
     }
 
     override fun handlePairRequest(request: Request) {
@@ -56,28 +57,25 @@ class RequestHandler : AbstractRequestHandler() {
     }
 
     override fun handleRemoveRequest(request: RemoveRequest) {
-        val uuid = request.uuid
-        val payload = request.payload.asJsonArray
-
-        if (uuid == null)
-            for (it in payload) {
-                val idStr = it.asString
-                Memory
-                    .getProfile(UUID.fromString(idStr))
-                    .ifPresent(Memory::remove)
+        request
+            .payload
+            .asJsonArray
+            .map(JsonElement::getAsString)
+            .map(UUID::fromString)
+            .forEach {
+                when (request.target) {
+                    TargetedRequest.Target.BUTTON  -> Persistent.findButton(it)
+                    TargetedRequest.Target.PROFILE -> Persistent.findProfile(it)
+                }.ifPresent(Removable::remove)
             }
-        else
-            Memory
-                .getProfile(uuid)
-                .ifPresent { it.removeButtons(payload) }
     }
 
     override fun handleUpdateRequest(request: UpdateRequest) {
         val uuid = request.uuid ?: return
 
         when (request.target) {
-            TargetedRequest.Target.BUTTON -> Memory.getButton(uuid)
-            TargetedRequest.Target.PROFILE -> Memory.getProfile(uuid)
+            TargetedRequest.Target.BUTTON  -> Persistent.findButton(uuid)
+            TargetedRequest.Target.PROFILE -> Persistent.findProfile(uuid)
         }.ifPresent { it.update(request.payload.asJsonObject) }
     }
 }
