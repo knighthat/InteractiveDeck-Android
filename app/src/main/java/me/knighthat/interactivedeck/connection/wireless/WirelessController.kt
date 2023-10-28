@@ -4,6 +4,7 @@ import android.os.Build
 import com.google.gson.JsonObject
 import me.knighthat.interactivedeck.connection.RequestHandler
 import me.knighthat.interactivedeck.event.EventHandler
+import me.knighthat.interactivedeck.persistent.Persistent
 import me.knighthat.interactivedeck.vars.Settings
 import me.knighthat.interactivedeck.vars.Settings.BUFFER
 import me.knighthat.lib.connection.Connection
@@ -13,6 +14,7 @@ import me.knighthat.lib.connection.wireless.WirelessSender
 import me.knighthat.lib.logging.Log
 import java.io.InputStream
 import java.net.Socket
+import java.net.SocketException
 
 class WirelessController(
     private val ip: String,
@@ -47,6 +49,7 @@ class WirelessController(
 
     private fun startSender(client: Socket): WirelessSender {
         val sender = WirelessSender(client.getOutputStream())
+        Connection.whenConnectionStatusChanged { if (!Connection.isConnected()) client.close() }
         sender.start()
 
         val json = JsonObject()
@@ -68,7 +71,10 @@ class WirelessController(
                 RequestHandler()
             ).run()
         }.onFailure {
-            Log.exc("Parsing request failed!", it, false)
+            if (it is SocketException && !Connection.isConnected())
+                return
+            
+            Log.exc("Parsing request failed!", it, true)
             Log.reportBug()
         }
     }
