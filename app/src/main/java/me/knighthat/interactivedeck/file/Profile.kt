@@ -20,6 +20,7 @@ import me.knighthat.interactivedeck.persistent.Persistent
 import me.knighthat.lib.exception.ProfileFormatException
 import me.knighthat.lib.logging.Log
 import me.knighthat.lib.profile.AbstractProfile
+import me.knighthat.lib.util.ShortUUID
 import java.util.UUID
 
 class Profile(
@@ -50,21 +51,41 @@ class Profile(
         }
     }
 
-    override var displayName: String
-        get() = super.displayName
-        set(value) = logAndSendUpdate("displayName", displayName, value)
+    override var displayName: String = displayName
+        set(value) {
+            // If value stays the same, the do nothing
+            if (field == value) return
 
-    override var rows: Int
-        get() = super.rows
-        set(value) = logAndSendUpdate("rows", rows, value)
+            logUpdate("displayName", displayName, value)
+            field = value
+        }
 
-    override var columns: Int
-        get() = super.columns
-        set(value) = logAndSendUpdate("columns", columns, value)
+    override var rows: Int = super.rows
+        set(value) {
+            // If value stays the same, the do nothing
+            if (field == value) return
 
-    override var gap: Int
-        get() = super.gap
-        set(value) = logAndSendUpdate("gap", gap, value)
+            logUpdate("rows", rows, value)
+            field = value
+        }
+
+    override var columns: Int = super.columns
+        set(value) {
+            // If value stays the same, the do nothing
+            if (field == value) return
+
+            logUpdate("columns", columns, value)
+            field = value
+        }
+
+    override var gap: Int = super.gap
+        set(value) {
+            // If value stays the same, the do nothing
+            if (field == value) return
+
+            logUpdate("gap", gap, value)
+            field = value
+        }
 
     init {
         val profileType = if (isDefault) "default profile" else "profile"
@@ -91,6 +112,10 @@ class Profile(
     override fun updateButtons(buttonJson: JsonElement) {
         if (buttonJson.isJsonArray)
             addButtons(buttonJson.asJsonArray)
+    }
+
+    override fun logUpdate(property: String, oldValue: Any?, newValue: Any?) {
+        Log.deb("Profile $displayName (${ShortUUID.from(uuid)}) updated $property from \"$oldValue\" to \"$newValue\"")
     }
 
     /*
