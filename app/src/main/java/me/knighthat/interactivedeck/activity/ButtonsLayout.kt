@@ -8,14 +8,16 @@ import androidx.annotation.MainThread
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import me.knighthat.interactivedeck.R
+import me.knighthat.interactivedeck.component.ibutton.IButton
 import me.knighthat.interactivedeck.event.EventHandler
+import me.knighthat.interactivedeck.file.Profile
+import me.knighthat.interactivedeck.persistent.Persistent
 import me.knighthat.interactivedeck.task.GotoPage
-import me.knighthat.interactivedeck.task.Task
-import me.knighthat.interactivedeck.vars.Memory
 import me.knighthat.lib.connection.Connection
 import me.knighthat.lib.connection.action.Action
 import me.knighthat.lib.connection.request.ActionRequest
 import me.knighthat.lib.connection.wireless.WirelessSender
+import me.knighthat.lib.observable.Observer
 
 class ButtonsLayout : AppCompatActivity() {
 
@@ -37,47 +39,56 @@ class ButtonsLayout : AppCompatActivity() {
                 handleBackPress()
             }
         })
+
+        Persistent.setActive(Persistent.getDefaultProfile())
     }
 
-    private fun startObservation() {
-        Memory.aLive.observe(this) {
-            layout.removeAllViews()
+    private fun gridParams(button: IButton, columns: Int, rows: Int, gap: Int): GridLayout.LayoutParams {
+        val params = GridLayout.LayoutParams()
+        params.rowSpec = GridLayout.spec(button.posY, 1, 1f)
+        params.columnSpec = GridLayout.spec(button.posX, 1, 1f)
+        params.topMargin = if (button.posY == 0) 0 else gap
+        params.bottomMargin = if (button.posY == rows - 1) 0 else gap
+        params.leftMargin = if (button.posX == 0) 0 else gap
+        params.rightMargin = if (button.posX == columns - 1) 0 else gap
 
-            layout.columnCount = it.columns
-            layout.rowCount = it.rows
+        return params
+    }
 
-            for (button in it.buttons) {
-                val params = GridLayout.LayoutParams()
-                params.rowSpec = GridLayout.spec(button.posY, 1, 1f)
-                params.columnSpec = GridLayout.spec(button.posX, 1, 1f)
-                params.topMargin = if (button.posY == 0) 0 else it.gap
-                params.bottomMargin = if (button.posY == it.rows - 1) 0 else it.gap
-                params.leftMargin = if (button.posX == 0) 0 else it.gap
-                params.rightMargin = if (button.posX == it.columns - 1) 0 else it.gap
-                button.layoutParams = params
+    private fun addClickEvent(button: IButton) {
+        if (button.hasOnClickListeners())
+            return
 
-                if (!button.hasOnClickListeners())
-                    button.setOnClickListener {
-                        if (button.task is GotoPage) {
-                            switchProfile(button.task!!)
-                        } else {
-                            val action = Action(button.uuid, Action.ActionType.PRESS)
-                            WirelessSender.send(ActionRequest(action))
-                        }
-                    }
-                layout.addView(button)
-            }
+        val task = button.task
+        button.setOnClickListener {
+            if (task !is GotoPage) {
+                val action = Action(button.uuid, Action.ActionType.PRESS)
+                WirelessSender.send(ActionRequest(action))
+            } else
+                switchProfile(task)
         }
     }
 
-    @MainThread
-    private fun switchProfile(task: Task) {
-        if (task !is GotoPage) return
+    private fun startObservation() {
+        Persistent.observeActive(object : Observer<Profile> {
+            override fun update(oldValue: Profile?, newValue: Profile?) {
+                layout.removeAllViews()
+                if (newValue == null) return
 
-        Memory
-            .getProfile(task.uuid)
-            .ifPresent { Memory.active = it }
+                layout.columnCount = newValue.columns
+                layout.rowCount = newValue.rows
+
+                for (button in newValue.buttons) {
+                    button.layoutParams = gridParams(button, newValue.columns, newValue.rows, newValue.gap)
+                    addClickEvent(button)
+                    layout.addView(button)
+                }
+            }
+        })
     }
+
+    @MainThread
+    private fun switchProfile(task: GotoPage) = Persistent.findProfile(task.uuid).ifPresent(Persistent::setActive)
 
     @MainThread
     private fun handleBackPress() {
