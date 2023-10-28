@@ -38,6 +38,13 @@ public class Persistent {
 
     public static void setDefaultProfile( @NotNull Profile defaultProfile ) { Persistent.defaultProfile = defaultProfile; }
 
+    public static void free() {
+        INTERNAL.profiles.clear();
+        INTERNAL.buttons.clear();
+        INTERNAL.active.setValue( null );
+        defaultProfile = null;
+    }
+
     /* ============================ Profile ============================ */
 
     /**

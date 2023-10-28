@@ -35,6 +35,7 @@ class WirelessController(
             if (Connection.getStatus() != Connection.Status.ERROR)
                 Settings.saveLastHost(ip, port)
 
+            Persistent.free()
             this.interrupt()
         }
     }
