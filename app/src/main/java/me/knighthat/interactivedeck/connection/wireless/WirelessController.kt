@@ -12,6 +12,7 @@ import me.knighthat.lib.connection.request.PairRequest
 import me.knighthat.lib.connection.wireless.WirelessReceiver
 import me.knighthat.lib.connection.wireless.WirelessSender
 import me.knighthat.lib.logging.Log
+import me.knighthat.lib.observable.Observer
 import java.io.InputStream
 import java.net.Socket
 import java.net.SocketException
@@ -24,24 +25,26 @@ class WirelessController(
     init {
         name = "NET"
 
-        Connection.whenConnectionStatusChanged {
-            if (Connection.isConnected())
-                return@whenConnectionStatusChanged
+        Connection.whenConnectionStatusChanged(object : Observer<Connection.Status> {
+            override fun update(oldValue: Connection.Status?, newValue: Connection.Status?) {
+                if (Connection.isConnected())
+                    return
 
-            val currentActivity = EventHandler.getCurrentActivity() ?: return@whenConnectionStatusChanged
-            currentActivity.finish()
-            EventHandler.setCurrentActivity(null)
+                val currentActivity = EventHandler.getCurrentActivity() ?: return
+                currentActivity.finish()
+                EventHandler.setCurrentActivity(null)
 
-            if (Connection.getStatus() != Connection.Status.ERROR)
-                Settings.saveLastHost(ip, port)
+                if (!Connection.isError())
+                    Settings.saveLastHost(ip, port)
 
-            Persistent.free()
-            this.interrupt()
-        }
+                Persistent.free()
+                this@WirelessController.interrupt()
+            }
+        })
     }
 
     private fun handleDisconnection(sender: WirelessSender, client: Socket) {
-        Connection.setStatus(Connection.Status.DISCONNECTED)
+        Connection.status = Connection.Status.DISCONNECTED
 
         sender.interrupt()
         client.close()
@@ -50,7 +53,12 @@ class WirelessController(
 
     private fun startSender(client: Socket): WirelessSender {
         val sender = WirelessSender(client.getOutputStream())
-        Connection.whenConnectionStatusChanged { if (!Connection.isConnected()) client.close() }
+        Connection.whenConnectionStatusChanged(object : Observer<Connection.Status> {
+            override fun update(oldValue: Connection.Status?, newValue: Connection.Status?) {
+                if (Connection.isDisconnected())
+                    client.close()
+            }
+        })
         sender.start()
 
         val json = JsonObject()
@@ -74,7 +82,7 @@ class WirelessController(
         }.onFailure {
             if (it is SocketException && !Connection.isConnected())
                 return
-            
+
             Log.exc("Parsing request failed!", it, true)
             Log.reportBug()
         }
@@ -84,7 +92,7 @@ class WirelessController(
         Socket(ip, port)
             .runCatching {
 
-                Connection.setStatus(Connection.Status.CONNECTED)
+                Connection.status = Connection.Status.CONNECTED
 
                 val sender = startSender(this)
                 initReceiver(getInputStream())
@@ -94,7 +102,7 @@ class WirelessController(
 
             }.onFailure {
 
-                Connection.setStatus(Connection.Status.ERROR)
+                Connection.status = Connection.Status.ERROR
                 Log.exc("Connection error!", it, false)
 
             }
