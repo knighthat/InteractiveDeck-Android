@@ -10,10 +10,9 @@
 
 package me.knighthat.interactivedeck.connection
 
-import android.content.Intent
+import com.google.gson.JsonArray
 import com.google.gson.JsonElement
-import me.knighthat.interactivedeck.activity.ButtonsLayout
-import me.knighthat.interactivedeck.event.EventHandler
+import com.google.gson.JsonObject
 import me.knighthat.interactivedeck.file.Profile
 import me.knighthat.interactivedeck.persistent.Persistent
 import me.knighthat.lib.component.Removable
@@ -31,11 +30,28 @@ class RequestHandler : AbstractRequestHandler() {
     override fun handleActionRequest(request: ActionRequest) {}
 
     override fun handleAddRequest(request: AddRequest) {
-        val array = request.payload.asJsonArray
+        val array = request.payload
 
         if (request.target == TargetedRequest.Target.BUTTON) {
-            val uuid = request.uuid ?: return
-            Persistent.findProfile(uuid).ifPresent { it.addButtons(array) }
+
+            val map = HashMap<UUID, JsonArray>(1)
+            for (button in array) {
+                if (button !is JsonObject) continue
+                val profile = UUID.fromString(button["profile"].asString) ?: continue
+
+                if (!map.containsKey(profile))
+                    map[profile] = JsonArray()
+                else
+                    map[profile]?.add(button)
+            }
+
+            for (entry in map.entries)
+                Persistent
+                    .findProfile(entry.key)
+                    .ifPresent {
+                        it.addButtons(entry.value)
+                    }
+
         } else
             array.map(JsonElement::getAsJsonObject).forEach {
                 val profile = Profile.fromJson(it)
@@ -46,20 +62,15 @@ class RequestHandler : AbstractRequestHandler() {
     }
 
     override fun handlePairRequest(request: Request) {
-        AddRequest {
-            it.addAll(request.payload.asJsonArray)
-        }.send()
-
-        EventHandler.post {
-            val intent = Intent(EventHandler.DEF_ACTIVITY, ButtonsLayout::class.java)
-            EventHandler.DEF_ACTIVITY.startActivity(intent)
-        }
+        AddRequest(
+            TargetedRequest.Target.PROFILE,
+            request.payload.asJsonArray
+        ).send()
     }
 
     override fun handleRemoveRequest(request: RemoveRequest) {
         request
             .payload
-            .asJsonArray
             .map(JsonElement::getAsString)
             .map(UUID::fromString)
             .forEach {
@@ -71,7 +82,7 @@ class RequestHandler : AbstractRequestHandler() {
     }
 
     override fun handleUpdateRequest(request: UpdateRequest) {
-        val uuid = request.uuid ?: return
+        val uuid = request.uuid
 
         when (request.target) {
             TargetedRequest.Target.BUTTON  -> Persistent.findButton(uuid)
