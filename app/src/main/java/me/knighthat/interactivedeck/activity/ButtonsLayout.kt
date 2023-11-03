@@ -2,6 +2,7 @@ package me.knighthat.interactivedeck.activity
 
 import android.annotation.SuppressLint
 import android.os.Bundle
+import android.os.Looper
 import android.widget.GridLayout
 import androidx.activity.OnBackPressedCallback
 import androidx.annotation.MainThread
@@ -68,19 +69,27 @@ class ButtonsLayout : AppCompatActivity() {
     private fun startObservation() {
         Persistent.observeActive(object : Observer<Profile> {
             override fun update(oldValue: Profile?, newValue: Profile?) {
+                reload()
+            }
+        })
+    }
+
+    fun reload() {
+        if (Looper.myLooper() == Looper.getMainLooper())
+            Persistent.getActive().ifPresent {
                 layout.removeAllViews()
-                if (newValue == null) return
 
-                layout.columnCount = newValue.columns
-                layout.rowCount = newValue.rows
+                layout.columnCount = it.columns
+                layout.rowCount = it.rows
 
-                for (button in newValue.buttons) {
-                    button.layoutParams = gridParams(button, newValue.columns, newValue.rows, newValue.gap)
+                for (button in it.buttons) {
+                    button.layoutParams = gridParams(button, it.columns, it.rows, it.gap)
                     addClickEvent(button)
                     layout.addView(button)
                 }
             }
-        })
+        else
+            EventHandler.post(this::reload)
     }
 
     @MainThread
