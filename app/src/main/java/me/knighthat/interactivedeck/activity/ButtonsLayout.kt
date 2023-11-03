@@ -55,8 +55,8 @@ class ButtonsLayout : AppCompatActivity() {
         if (button.hasOnClickListeners())
             return
 
-        val task = button.task
         button.setOnClickListener {
+            val task = button.task
             if (task !is GotoPage) {
                 val action = Action(button.uuid, Action.ActionType.PRESS)
                 WirelessSender.send(ActionRequest(action))
