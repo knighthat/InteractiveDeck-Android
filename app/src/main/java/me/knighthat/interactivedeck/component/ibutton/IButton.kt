@@ -52,8 +52,11 @@ class IButton(
                 return
 
             logUpdate("task", task, value)
-            if (value is GotoPage)
-                field = GotoPage(value.uuid)
+            field =
+                    if (value is GotoPage)
+                        GotoPage(value.uuid)
+                    else
+                        null
         }
 
     private var fill: Int = 0
@@ -151,7 +154,7 @@ class IButton(
     }
 
     override val target: TargetedRequest.Target = TargetedRequest.Target.BUTTON
-    
+
     override fun remove() = Persistent.findProfile(profile).ifPresent { it.removeButton(this) }
 
     override fun logUpdate(property: String, oldValue: Any?, newValue: Any?) {
