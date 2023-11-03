@@ -92,6 +92,11 @@ class Profile(
         Log.deb("Created $profileType \"$displayName\" ($uuid)")
     }
 
+    fun removeButton(button: IButton) {
+        buttons.remove(button)
+        Persistent.remove(button)
+    }
+
     fun addButtons(array: JsonArray) {
         array.forEach {
             val button = IButton.fromJson(uuid, it.asJsonObject)
