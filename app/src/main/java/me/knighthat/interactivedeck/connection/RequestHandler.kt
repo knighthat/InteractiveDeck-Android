@@ -13,6 +13,7 @@ package me.knighthat.interactivedeck.connection
 import com.google.gson.JsonArray
 import com.google.gson.JsonElement
 import com.google.gson.JsonObject
+import me.knighthat.interactivedeck.component.ibutton.IButton
 import me.knighthat.interactivedeck.file.Profile
 import me.knighthat.interactivedeck.persistent.Persistent
 import me.knighthat.lib.component.Removable
@@ -27,39 +28,35 @@ import java.util.UUID
 
 class RequestHandler : AbstractRequestHandler() {
 
+    private fun addButtons(array: JsonArray) {
+        for (button in array) {
+            if (button !is JsonObject || !button.has("profile")) continue
+            val profile = UUID.fromString(button["profile"].asString) ?: continue
+
+            Persistent
+                .findProfile(profile)
+                .ifPresent {
+                    it.addButton(IButton.fromJson(profile, button.asJsonObject))
+                }
+        }
+    }
+
+    private fun addProfiles(array: JsonArray) {
+        array
+            .map(JsonElement::getAsJsonObject)
+            .forEach { Persistent.add(Profile.fromJson(it)) }
+    }
+
+    private fun <T> getFunction(target: TargetedRequest.Target, type: T, buttonFunc: (T) -> Unit, profileFunc: (T) -> Unit) {
+        return when (target) {
+            TargetedRequest.Target.PROFILE -> profileFunc
+            TargetedRequest.Target.BUTTON  -> buttonFunc
+        }(type)
+    }
+
     override fun handleActionRequest(request: ActionRequest) {}
 
-    override fun handleAddRequest(request: AddRequest) {
-        val array = request.payload
-
-        if (request.target == TargetedRequest.Target.BUTTON) {
-
-            val map = HashMap<UUID, JsonArray>(1)
-            for (button in array) {
-                if (button !is JsonObject) continue
-                val profile = UUID.fromString(button["profile"].asString) ?: continue
-
-                if (!map.containsKey(profile))
-                    map[profile] = JsonArray()
-                else
-                    map[profile]?.add(button)
-            }
-
-            for (entry in map.entries)
-                Persistent
-                    .findProfile(entry.key)
-                    .ifPresent {
-                        it.addButtons(entry.value)
-                    }
-
-        } else
-            array.map(JsonElement::getAsJsonObject).forEach {
-                val profile = Profile.fromJson(it)
-                Persistent.add(profile)
-                if (profile.isDefault)
-                    Persistent.setDefaultProfile(profile)
-            }
-    }
+    override fun handleAddRequest(request: AddRequest) = getFunction(request.target, request.payload, this::addButtons, this::addProfiles)
 
     override fun handlePairRequest(request: Request) {
         AddRequest(
@@ -75,18 +72,18 @@ class RequestHandler : AbstractRequestHandler() {
             .map(UUID::fromString)
             .forEach {
                 when (request.target) {
-                    TargetedRequest.Target.BUTTON  -> Persistent.findButton(it)
-                    TargetedRequest.Target.PROFILE -> Persistent.findProfile(it)
-                }.ifPresent(Removable::remove)
+                    TargetedRequest.Target.PROFILE -> Persistent::findProfile
+                    TargetedRequest.Target.BUTTON  -> Persistent::findButton
+                }(it).ifPresent(Removable::remove)
             }
     }
 
     override fun handleUpdateRequest(request: UpdateRequest) {
-        val uuid = request.uuid
-
         when (request.target) {
-            TargetedRequest.Target.BUTTON  -> Persistent.findButton(uuid)
-            TargetedRequest.Target.PROFILE -> Persistent.findProfile(uuid)
-        }.ifPresent { it.update(request.payload.asJsonObject) }
+            TargetedRequest.Target.PROFILE -> Persistent::findProfile
+            TargetedRequest.Target.BUTTON  -> Persistent::findButton
+        }(request.uuid).ifPresent {
+            it.update(request.payload.asJsonObject)
+        }
     }
 }
