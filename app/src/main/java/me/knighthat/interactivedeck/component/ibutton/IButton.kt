@@ -151,7 +151,8 @@ class IButton(
     }
 
     override val target: TargetedRequest.Target = TargetedRequest.Target.BUTTON
-    override fun remove() = Persistent.remove(this)
+    
+    override fun remove() = Persistent.findProfile(profile).ifPresent { it.removeButton(this) }
 
     override fun logUpdate(property: String, oldValue: Any?, newValue: Any?) {
         val old =
