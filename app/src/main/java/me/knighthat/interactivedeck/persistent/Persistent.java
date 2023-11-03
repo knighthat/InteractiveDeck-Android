@@ -19,6 +19,7 @@ import android.content.Intent;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -40,14 +41,13 @@ public class Persistent {
 
     public static Profile getDefaultProfile() { return defaultProfile; }
 
-    public static void setDefaultProfile( @NotNull Profile defaultProfile ) { Persistent.defaultProfile = defaultProfile; }
-
     public static void free() {
-        INTERNAL.profiles.clear();
-        INTERNAL.buttons.clear();
+        INTERNAL.profiles.forEach( Profile::remove );
+        INTERNAL.buttons.forEach( IButton::remove );
         INTERNAL.active.setValue( null );
         defaultProfile = null;
     }
+
 
     /* ============================ Profile ============================ */
 
@@ -85,7 +85,11 @@ public class Persistent {
     }
 
     public static void remove( @NotNull Profile profile ) {
-        profile.getButtons().forEach( INTERNAL.buttons::remove );
+        Iterator<IButton> buttons = profile.getButtons().iterator();
+        while (buttons.hasNext()) {
+            remove( buttons.next() );
+            buttons.remove();
+        }
         INTERNAL.profiles.remove( profile );
     }
 
@@ -145,7 +149,6 @@ public class Persistent {
      * @param observer "watcher" to active {@link Profile}
      */
     public static void observeActive( @NotNull Observer<Profile> observer ) { INTERNAL.active.observe( observer ); }
-
 
     private final @NotNull Set<Profile> profiles;
     private final @NotNull Set<IButton> buttons;
