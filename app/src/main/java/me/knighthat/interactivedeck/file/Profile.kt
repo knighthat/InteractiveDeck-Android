@@ -14,6 +14,7 @@ import androidx.annotation.MainThread
 import com.google.gson.JsonArray
 import com.google.gson.JsonElement
 import com.google.gson.JsonObject
+import me.knighthat.interactivedeck.activity.ButtonsLayout
 import me.knighthat.interactivedeck.component.ibutton.IButton
 import me.knighthat.interactivedeck.event.EventHandler
 import me.knighthat.interactivedeck.persistent.Persistent
@@ -58,6 +59,7 @@ class Profile(
 
             logUpdate("displayName", displayName, value)
             field = value
+            reloadButtons()
         }
 
     override var rows: Int = super.rows
@@ -67,6 +69,7 @@ class Profile(
 
             logUpdate("rows", rows, value)
             field = value
+            reloadButtons()
         }
 
     override var columns: Int = super.columns
@@ -76,6 +79,7 @@ class Profile(
 
             logUpdate("columns", columns, value)
             field = value
+            reloadButtons()
         }
 
     override var gap: Int = super.gap
@@ -85,6 +89,7 @@ class Profile(
 
             logUpdate("gap", gap, value)
             field = value
+            reloadButtons()
         }
 
     init {
@@ -92,18 +97,35 @@ class Profile(
         Log.deb("Created $profileType \"$displayName\" ($uuid)")
     }
 
+    private fun addButtons(array: JsonArray) {
+        array.forEach {
+            val button = IButton.fromJson(uuid, it.asJsonObject)
+            addButton(button)
+        }
+        reloadButtons()
+    }
+
+    fun reloadButtons() {
+        val activity = EventHandler.getCurrentActivity() ?: return
+        if (activity !is ButtonsLayout)
+            return
+
+        activity.reload()
+        Log.deb("Buttons reloaded")
+    }
+
+    /**
+     * Adds a button to current button list and [Persistent]'s button list.
+     * Require [reloadButtons] to apply changes.
+     */
+    fun addButton(button: IButton) {
+        buttons.add(button)
+        Persistent.add(button)
+    }
+
     fun removeButton(button: IButton) {
         buttons.remove(button)
         Persistent.remove(button)
-    }
-
-    fun addButtons(array: JsonArray) {
-        array.forEach {
-            val button = IButton.fromJson(uuid, it.asJsonObject)
-
-            buttons.add(button)
-            Persistent.add(button)
-        }
     }
 
     override fun remove() {
