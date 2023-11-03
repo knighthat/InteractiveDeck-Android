@@ -94,7 +94,7 @@ class ButtonsLayout : AppCompatActivity() {
                 val confirm = AlertDialog.Builder(this@ButtonsLayout)
                 confirm.setTitle("Disconnect?")
                 confirm.setMessage("Are you sure you want to disconnect from host and go back to main menu?")
-                confirm.setPositiveButton("Yes") { _, _ -> Connection.setStatus(Connection.Status.DISCONNECTED) }
+                confirm.setPositiveButton("Yes") { _, _ -> Connection.status = Connection.Status.DISCONNECTED }
                 confirm.setNegativeButton("No") { _, _ -> }
                 confirm.show()
 
