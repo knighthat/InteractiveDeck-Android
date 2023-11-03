@@ -17,7 +17,6 @@ import me.knighthat.interactivedeck.task.GotoPage
 import me.knighthat.lib.connection.Connection
 import me.knighthat.lib.connection.action.Action
 import me.knighthat.lib.connection.request.ActionRequest
-import me.knighthat.lib.connection.wireless.WirelessSender
 import me.knighthat.lib.observable.Observer
 
 class ButtonsLayout : AppCompatActivity() {
@@ -57,12 +56,13 @@ class ButtonsLayout : AppCompatActivity() {
             return
 
         button.setOnClickListener {
-            val task = button.task
-            if (task !is GotoPage) {
-                val action = Action(button.uuid, Action.ActionType.PRESS)
-                WirelessSender.send(ActionRequest(action))
-            } else
-                switchProfile(task)
+            when (val task = button.task) {
+                is GotoPage -> switchProfile(task)
+                else        ->
+                    ActionRequest(
+                        Action(button.uuid, Action.ActionType.PRESS)
+                    ).send()
+            }
         }
     }
 
