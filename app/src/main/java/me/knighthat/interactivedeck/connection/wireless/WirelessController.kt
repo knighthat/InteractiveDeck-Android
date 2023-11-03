@@ -6,7 +6,6 @@ import me.knighthat.interactivedeck.connection.RequestHandler
 import me.knighthat.interactivedeck.event.EventHandler
 import me.knighthat.interactivedeck.persistent.Persistent
 import me.knighthat.interactivedeck.vars.Settings
-import me.knighthat.interactivedeck.vars.Settings.BUFFER
 import me.knighthat.lib.connection.Connection
 import me.knighthat.lib.connection.request.PairRequest
 import me.knighthat.lib.connection.wireless.WirelessReceiver
@@ -22,45 +21,7 @@ class WirelessController(
     private val port: Int
 ) : Thread() {
 
-    init {
-        name = "NET"
-
-        Connection.whenConnectionStatusChanged(object : Observer<Connection.Status> {
-            override fun update(oldValue: Connection.Status?, newValue: Connection.Status?) {
-                if (Connection.isConnected())
-                    return
-
-                val currentActivity = EventHandler.getCurrentActivity() ?: return
-                currentActivity.finish()
-                EventHandler.setCurrentActivity(null)
-
-                if (!Connection.isError())
-                    Settings.saveLastHost(ip, port)
-
-                Persistent.free()
-                this@WirelessController.interrupt()
-            }
-        })
-    }
-
-    private fun handleDisconnection(sender: WirelessSender, client: Socket) {
-        Connection.status = Connection.Status.DISCONNECTED
-
-        sender.interrupt()
-        client.close()
-        name = "NET"
-    }
-
-    private fun startSender(client: Socket): WirelessSender {
-        val sender = WirelessSender(client.getOutputStream())
-        Connection.whenConnectionStatusChanged(object : Observer<Connection.Status> {
-            override fun update(oldValue: Connection.Status?, newValue: Connection.Status?) {
-                if (Connection.isDisconnected())
-                    client.close()
-            }
-        })
-        sender.start()
-
+    private fun sendPairRequest() {
         val json = JsonObject()
         json.addProperty("brand", Build.BRAND)
         json.addProperty("device", Build.DEVICE)
@@ -68,15 +29,15 @@ class WirelessController(
         json.addProperty("model", Build.MODEL)
         json.addProperty("androidVersion", Build.VERSION.RELEASE)
         PairRequest(json).send()
-
-        return sender
     }
 
-    private fun initReceiver(inStream: InputStream) {
+    private fun setupReceiver(inStream: InputStream) {
+        name = "NET/I"
+
         runCatching {
             WirelessReceiver(
                 inStream,
-                BUFFER,
+                Settings.BUFFER,
                 RequestHandler()
             ).run()
         }.onFailure {
@@ -88,15 +49,45 @@ class WirelessController(
         }
     }
 
+    private fun addConnectionWatcher(client: Socket) {
+        Connection.whenConnectionStatusChanged(object : Observer<Connection.Status> {
+            override fun update(oldValue: Connection.Status?, newValue: Connection.Status?) {
+                // Skip this if connected is established
+                if (Connection.isConnected())
+                    return
+                
+                Persistent.free()
+
+                val currentActivity = EventHandler.getCurrentActivity() ?: return
+                currentActivity.finish()
+                EventHandler.setCurrentActivity(null)
+
+                if (Connection.isDisconnected()) {
+                    Settings.saveLastHost(ip, port)
+                    client.close()
+                }
+
+                this@WirelessController.interrupt()
+            }
+        })
+    }
+
     override fun run() {
         Socket(ip, port)
             .runCatching {
 
                 Connection.status = Connection.Status.CONNECTED
 
-                val sender = startSender(this)
-                initReceiver(getInputStream())
-                handleDisconnection(sender, this)
+                val sender = WirelessSender(getOutputStream())
+                sender.start()
+                addConnectionWatcher(this)
+
+                sendPairRequest()
+                setupReceiver(getInputStream())
+
+                name = "NET"
+                Connection.status = Connection.Status.DISCONNECTED
+                sender.interrupt()
 
                 close()
 
