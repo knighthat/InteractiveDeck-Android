@@ -80,7 +80,7 @@ class WirelessController(
                 RequestHandler()
             ).run()
         }.onFailure {
-            if (it is SocketException && !Connection.isConnected())
+            if (it is SocketException && Connection.isDisconnected())
                 return
 
             Log.exc("Parsing request failed!", it, true)
