@@ -14,6 +14,8 @@
 
 package me.knighthat.interactivedeck.persistent;
 
+import android.content.Intent;
+
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashSet;
@@ -21,7 +23,9 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
+import me.knighthat.interactivedeck.activity.ButtonsLayout;
 import me.knighthat.interactivedeck.component.ibutton.IButton;
+import me.knighthat.interactivedeck.event.EventHandler;
 import me.knighthat.interactivedeck.file.Profile;
 import me.knighthat.lib.logging.Log;
 import me.knighthat.lib.observable.Observable;
@@ -69,8 +73,15 @@ public class Persistent {
         INTERNAL.profiles.add( profile );
         INTERNAL.buttons.addAll( profile.getButtons() );
 
-        if (profile.isDefault())
-            defaultProfile = profile;
+        if (!profile.isDefault())
+            return;
+
+        defaultProfile = profile;
+
+        EventHandler.post( () -> {
+            Intent intent = new Intent( EventHandler.DEF_ACTIVITY, ButtonsLayout.class );
+            EventHandler.DEF_ACTIVITY.startActivity( intent );
+        } );
     }
 
     public static void remove( @NotNull Profile profile ) {
